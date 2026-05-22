@@ -1,0 +1,13 @@
+# Template for src-tauri/gen/android/key.properties (gitignored).
+#
+# Copy this file to `key.properties` in the same directory and fill in the
+# real passwords from your password manager. The real `key.properties` is
+# ignored by .gitignore — never commit it.
+#
+# `storeFile` should be an absolute path so the same file works from any
+# Gradle invocation directory (local dev, CI, etc.).
+
+storeFile=/home/moazbaghdadi/keystores/muhaseb-tech-release.keystore
+storePassword=replace-with-store-password
+keyAlias=muhaseb-tech-upload
+keyPassword=replace-with-key-password
