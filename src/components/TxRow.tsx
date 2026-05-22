@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import type { Bucket, Transaction } from '../types';
 import { IDown, IPaperclip, IPencil, ITrans, ITrash, IUp } from './icons';
 import { useT } from '../i18n/LangProvider';
+import { useBreakpoint } from '../lib/useBreakpoint';
 import { attachmentsSupported } from '../lib/attachments';
 import type { MessageKey } from '../i18n/messages';
 
@@ -24,6 +25,8 @@ type Props = {
 
 export function TxRow({ t, onDelete, onEdit, onOpenAttachments, tableMode }: Props) {
   const { t: tr, fmtMoneyAbs, fmtDate } = useT();
+  const bp = useBreakpoint();
+  const compact = bp === 'mobile' && !tableMode;
   const isTransfer = t.type === 'transfer';
   const inc = t.type === 'income';
   const dayStr = fmtDate(t.date);
@@ -159,6 +162,104 @@ export function TxRow({ t, onDelete, onEdit, onOpenAttachments, tableMode }: Pro
     );
   }
 
+  const trashButton = onDelete ? (
+    <button
+      aria-label={deleteAria}
+      onClick={() => onDelete(t.id)}
+      style={{
+        background: 'var(--red-light)',
+        border: 'none',
+        borderRadius: 8,
+        width: compact ? 34 : 36,
+        height: compact ? 34 : 36,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        color: 'var(--red)',
+        flexShrink: 0,
+      }}
+    >
+      <ITrash s={compact ? 16 : 20} />
+    </button>
+  ) : null;
+
+  if (compact) {
+    return (
+      <div
+        style={{
+          background: '#fff',
+          border: '1.5px solid var(--border)',
+          borderRadius: 14,
+          padding: '12px 14px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 12,
+            flexShrink: 0,
+            background: badgeBg,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: amountColor,
+            marginTop: 2,
+          }}
+        >
+          <TypeIcon s={18} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <p
+            style={{
+              fontSize: 15,
+              fontWeight: 700,
+              lineHeight: 1.3,
+              overflowWrap: 'anywhere',
+            }}
+          >
+            {t.description || (isTransfer ? typeLabel : t.category)}
+          </p>
+          <p
+            style={{
+              fontSize: 12.5,
+              color: 'var(--text-muted)',
+              lineHeight: 1.3,
+              overflowWrap: 'anywhere',
+            }}
+          >
+            {bucketCellText} · {isTransfer ? typeLabel : t.category} · {dayStr}
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+            <span
+              style={{
+                flex: 1,
+                minWidth: 0,
+                fontSize: 17,
+                fontWeight: 700,
+                color: amountColor,
+                direction: 'ltr',
+                overflowWrap: 'anywhere',
+              }}
+            >
+              {sign}
+              {fmtMoneyAbs(t.amount)}
+            </span>
+            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+              {paperclip}
+              {editButton}
+              {trashButton}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -217,26 +318,7 @@ export function TxRow({ t, onDelete, onEdit, onOpenAttachments, tableMode }: Pro
         </span>
         {paperclip}
         {editButton}
-        {onDelete && (
-          <button
-            aria-label={deleteAria}
-            onClick={() => onDelete(t.id)}
-            style={{
-              background: 'var(--red-light)',
-              border: 'none',
-              borderRadius: 8,
-              width: 36,
-              height: 36,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'var(--red)',
-            }}
-          >
-            <ITrash />
-          </button>
-        )}
+        {trashButton}
       </div>
     </div>
   );

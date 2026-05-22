@@ -81,8 +81,28 @@ export default function App() {
   return (
     <CurrencyProvider currency={store.currency}>
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      {isMobile && (
+        <div
+          aria-hidden
+          style={{
+            position: 'fixed',
+            top: 0,
+            insetInlineStart: 0,
+            insetInlineEnd: 0,
+            height: 'env(safe-area-inset-top)',
+            background: 'var(--bg)',
+            zIndex: 100,
+          }}
+        />
+      )}
       <Sidebar screen={store.screen} setScreen={store.setScreen} />
-      <main style={{ flex: 1, overflow: 'auto' }}>
+      <main
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: isMobile ? 'hidden' : 'auto',
+        }}
+      >
         {!isMobile && (
           <div
             style={{

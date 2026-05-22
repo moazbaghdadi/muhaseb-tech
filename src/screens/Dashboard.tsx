@@ -96,13 +96,15 @@ export function Dashboard({ transactions, setScreen }: Props) {
             gap: 16,
           }}
         >
-          <div>
+          <div style={{ minWidth: 0, flex: '1 1 240px' }}>
             <p style={{ fontSize: 14, opacity: 0.8, marginBottom: 8 }}>{t('dashboard.balance')}</p>
             <p
               style={{
-                fontSize: isMobile ? 38 : 52,
+                fontSize: isMobile ? 32 : 52,
                 fontWeight: 700,
                 letterSpacing: -1,
+                lineHeight: 1.1,
+                overflowWrap: 'anywhere',
               }}
             >
               {fmtMoney(total)}
@@ -110,46 +112,54 @@ export function Dashboard({ transactions, setScreen }: Props) {
             <div
               style={{
                 display: 'flex',
-                gap: 24,
+                gap: isMobile ? 14 : 24,
                 marginTop: 12,
                 opacity: 0.85,
-                fontSize: 15,
+                fontSize: isMobile ? 13 : 15,
                 flexWrap: 'wrap',
               }}
             >
-              <span>
+              <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
                 <span style={{ opacity: 0.75 }}>{t('dashboard.bankBalance')}:</span>{' '}
                 <strong>{fmtMoney(bankBal)}</strong>
               </span>
-              <span>
+              <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
                 <span style={{ opacity: 0.75 }}>{t('dashboard.cashBalance')}:</span>{' '}
                 <strong>{fmtMoney(cashBal)}</strong>
               </span>
             </div>
             <p style={{ fontSize: 13, opacity: 0.7, marginTop: 10 }}>{fmtMonth(currentYm)}</p>
           </div>
-          <div style={{ display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ textAlign: 'center' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: isMobile ? 10 : 20,
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              minWidth: 0,
+            }}
+          >
+            <div style={{ textAlign: 'center', minWidth: 0, overflowWrap: 'anywhere' }}>
               <p style={{ fontSize: 12, opacity: 0.75, marginBottom: 4 }}>
                 {t('dashboard.monthIncome')}
               </p>
-              <p style={{ fontSize: 22, fontWeight: 700 }}>{fmtMoneyAbs(mI)}</p>
+              <p style={{ fontSize: isMobile ? 17 : 22, fontWeight: 700 }}>{fmtMoneyAbs(mI)}</p>
             </div>
             <div style={{ width: 1, height: 44, background: 'oklch(100% 0 0 / 0.2)' }} />
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'center', minWidth: 0, overflowWrap: 'anywhere' }}>
               <p style={{ fontSize: 12, opacity: 0.75, marginBottom: 4 }}>
                 {t('dashboard.monthExpense')}
               </p>
-              <p style={{ fontSize: 22, fontWeight: 700 }}>{fmtMoneyAbs(mE)}</p>
+              <p style={{ fontSize: isMobile ? 17 : 22, fontWeight: 700 }}>{fmtMoneyAbs(mE)}</p>
             </div>
             <div style={{ width: 1, height: 44, background: 'oklch(100% 0 0 / 0.2)' }} />
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'center', minWidth: 0, overflowWrap: 'anywhere' }}>
               <p style={{ fontSize: 12, opacity: 0.75, marginBottom: 4 }}>
                 {t('dashboard.monthNet')}
               </p>
               <p
                 style={{
-                  fontSize: 22,
+                  fontSize: isMobile ? 17 : 22,
                   fontWeight: 700,
                   color: mN >= 0 ? '#a8ffce' : '#ffb3a8',
                 }}
@@ -246,9 +256,34 @@ export function Dashboard({ transactions, setScreen }: Props) {
           ) : (
             catEntries.map(([cat, val]) => (
               <div key={cat} style={{ marginBottom: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600 }}>{cat}</span>
-                  <span style={{ fontSize: 14, color: 'var(--red)', fontWeight: 700 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginBottom: 6,
+                    gap: 12,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      minWidth: 0,
+                      overflowWrap: 'anywhere',
+                    }}
+                  >
+                    {cat}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 14,
+                      color: 'var(--red)',
+                      fontWeight: 700,
+                      minWidth: 0,
+                      overflowWrap: 'anywhere',
+                    }}
+                  >
                     {fmtMoneyAbs(val)}
                   </span>
                 </div>
