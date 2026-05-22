@@ -1,9 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.muhaseb_tech" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- App renders edge-to-edge (see MainActivity.enableEdgeToEdge); status bar is
-             transparent and the WebView paints under it. The day theme has a light app
-             background, so the system needs dark status-bar icons to stay readable. -->
-        <item name="android:windowLightStatusBar">true</item>
+        <!-- Status-bar icon color is forced from MainActivity.enableEdgeToEdge — see
+             SystemBarStyle.light(...) there. Setting it here would be overridden. -->
     </style>
 </resources>
