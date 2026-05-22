@@ -375,6 +375,7 @@ export function AddTxModal({
           aria-label={t('modal.field.amountShort')}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
+          onWheel={(e) => e.currentTarget.blur()}
           type="number"
           inputMode="decimal"
           min={0}

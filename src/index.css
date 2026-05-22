@@ -41,6 +41,18 @@ select {
   font-family: inherit;
 }
 
+/* Hide spinner arrows on number inputs (paired with onWheel-blur on the
+   field itself so trackpad scrolling can't nudge the value). */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 #root {
   min-height: 100vh;
 }

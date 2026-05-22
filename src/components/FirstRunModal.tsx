@@ -215,6 +215,7 @@ export function FirstRunModal({ onComplete }: Props) {
               step="0.01"
               value={bank}
               onChange={(e) => setBank(e.target.value)}
+              onWheel={(e) => e.currentTarget.blur()}
               placeholder="0"
               style={{ ...inputSt, marginBottom: 0 }}
             />
@@ -238,6 +239,7 @@ export function FirstRunModal({ onComplete }: Props) {
               step="0.01"
               value={cash}
               onChange={(e) => setCash(e.target.value)}
+              onWheel={(e) => e.currentTarget.blur()}
               placeholder="0"
               style={{ ...inputSt, marginBottom: 0 }}
             />

@@ -1,6 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.muhaseb_tech" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Customize your theme here. -->
+        <!-- App renders edge-to-edge (see MainActivity.enableEdgeToEdge); status bar is
+             transparent and the WebView paints under it. The day theme has a light app
+             background, so the system needs dark status-bar icons to stay readable. -->
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>
