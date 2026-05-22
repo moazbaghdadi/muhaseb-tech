@@ -4,6 +4,7 @@ import { LANGS, type Lang, type MessageKey } from '../i18n/messages';
 import { CURRENCIES, CURRENCY_CODES, type CurrencyCode } from '../lib/currency';
 import { inputStyle as inputSt } from './styles';
 import { useBreakpoint } from '../lib/useBreakpoint';
+import wordmark from '../assets/wordmark.png';
 
 type Props = {
   onComplete: (input: {
@@ -95,7 +96,22 @@ export function FirstRunModal({ onComplete }: Props) {
           })}
         </div>
 
-        <h2 id="first-run-title" style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>
+        <img
+          src={wordmark}
+          alt=""
+          aria-hidden
+          style={{
+            display: 'block',
+            width: '100%',
+            maxWidth: 280,
+            height: 'auto',
+            margin: '0 auto 16px',
+          }}
+        />
+        <h2
+          id="first-run-title"
+          style={{ fontSize: 22, fontWeight: 700, margin: 0, textAlign: 'center' }}
+        >
           {t('firstRun.title')}
         </h2>
         <p
@@ -105,6 +121,7 @@ export function FirstRunModal({ onComplete }: Props) {
             marginTop: 8,
             marginBottom: 22,
             lineHeight: 1.5,
+            textAlign: 'center',
           }}
         >
           {t('firstRun.intro')}

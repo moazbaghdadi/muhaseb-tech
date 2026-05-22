@@ -2,6 +2,7 @@ import type { Screen } from '../types';
 import { MOBILE_HIDDEN_SCREENS, NAV_ITEMS } from './nav-items';
 import { useT } from '../i18n/LangProvider';
 import { useBreakpoint } from '../lib/useBreakpoint';
+import logoMark from '../assets/logo-mark.png';
 
 type Props = {
   screen: Screen;
@@ -45,25 +46,20 @@ function SideColumn({ screen, setScreen }: Props) {
             height: 38,
             borderRadius: 10,
             flexShrink: 0,
-            background: 'oklch(100% 0 0 / 0.15)',
+            background: '#fff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            overflow: 'hidden',
           }}
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth={2}
-            strokeLinecap="round"
-            width={20}
-            height={20}
-          >
-            <path d="M12 2L2 7l10 5 10-5-10-5z" />
-            <path d="M2 17l10 5 10-5" />
-            <path d="M2 12l10 5 10-5" />
-          </svg>
+          <img
+            src={logoMark}
+            alt=""
+            width={32}
+            height={32}
+            style={{ display: 'block', objectFit: 'contain' }}
+          />
         </div>
         <span style={{ color: '#fff', fontWeight: 700, fontSize: 16, whiteSpace: 'nowrap' }}>
           {t('app.name')}
