@@ -193,3 +193,29 @@ export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/late
 - `tauri-plugin-updater` is desktop-only: the Cargo dep is target-gated (`cfg(not(android|ios))`) and the init call in `src-tauri/src/lib.rs` is `#[cfg(desktop)]`-gated. Mobile updates flow through Play Store.
 - On-device data path: `/data/user/0/com.codetiquette.muhasebtech/muhaseb-tech/data.json` — under the app's data root, **not** under `files/` (verified on Android via Tauri's `BaseDirectory.AppConfig`). Inspect via `adb shell run-as com.codetiquette.muhasebtech ls muhaseb-tech/`.
 - Generated Gradle/Android files in `src-tauri/gen/android/` are committed; the inner `.gitignore` keeps build outputs out.
+
+### Mobile release pipeline
+
+Signed AAB + universal APK are produced on every `v*` tag push by the `android` job in `.github/workflows/release.yml` (sibling of the desktop matrix). Locally reproducible via `pnpm tauri android build`. First proven end-to-end on v0.7.2 (2026-05-22).
+
+**Upload keystore** (the Play Store signing identity for `com.codetiquette.muhasebtech`):
+- File: `~/keystores/muhaseb-tech-release.keystore` (PKCS12, RSA-2048, 25-year validity, never in repo).
+- Alias: `muhaseb-tech-upload`.
+- Fingerprints + DN recorded in Claude project memory (`project_mobile_keystore.md`). The same Austrian-company Play Console org account that ships TicketShop will publish this app — see `reference_play_console_shared_account.md` for the Phase 7 implications (no $25 fee, no identity verification, no banking re-setup).
+- **Losing this keystore *before* Play App Signing enrolment bricks all future updates for `com.codetiquette.muhasebtech`** — same risk class as the OTA signing key. After first AAB upload, Google's Play App Signing holds the canonical app-signing cert and the upload-key fingerprint diverges; record Google's cert separately at that point.
+
+**Local signing config:** `src-tauri/gen/android/key.properties` (gitignored at `src-tauri/gen/android/.gitignore:16`) supplies `storeFile` / `storePassword` / `keyAlias` / `keyPassword` to the gradle `signingConfigs.release` block in `src-tauri/gen/android/app/build.gradle.kts`. A template `key.properties.example` is checked in for first-time setup — copy it, fill in real passwords from your password manager, never commit the real file. The gradle wiring is conditional (`if (keystoreProperties["storeFile"] != null)`) so `pnpm android:dev` keeps working without `key.properties` (debug builds use the Android debug keystore as usual).
+
+**CI signing config:** four GitHub repository secrets are baked into the same `key.properties` shape at workflow run time:
+- `ANDROID_KEYSTORE_BASE64` — `base64 -w0 ~/keystores/muhaseb-tech-release.keystore`.
+- `ANDROID_KEYSTORE_PASSWORD` — store password.
+- `ANDROID_KEY_ALIAS` — `muhaseb-tech-upload`.
+- `ANDROID_KEY_PASSWORD` — key password (same value as store password is fine; that's the keytool default).
+
+**Build outputs:**
+- AAB (Play upload): `src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab` (~45 MB; Play splits per-ABI on delivery so device-side download is ~30–40 MB).
+- Universal APK (sideload): `src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk` (~142 MB; contains all 4 ABIs).
+
+**Pipeline ordering:** the `android` job has `needs: build` so it runs after the desktop matrix completes. This avoids a race where both `tauri-action` (desktop) and `softprops/action-gh-release` (android) try to create the same draft release simultaneously. Total wall-clock with android is ~15 min (vs ~12 min desktop-only).
+
+**Verifying a signed artifact:** `apksigner verify --print-certs <apk>` (in `$ANDROID_HOME/build-tools/<version>/`) prints the embedded cert's DN + SHA-256. The SHA-256 must match the keystore fingerprint recorded in memory; mismatch means the wrong key got picked up.
