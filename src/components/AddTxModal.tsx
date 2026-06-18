@@ -1,7 +1,14 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import type { Attachment, Bucket, Categories, Transaction, TxType } from '../types';
+import type {
+  Attachment,
+  Bucket,
+  Categories,
+  RecurringInput,
+  Transaction,
+  TxType,
+} from '../types';
 import { todayIso } from '../lib/format';
-import { IClose, IDown, IPlus, ITrans, IUp } from './icons';
+import { IClose, IDown, IPlus, IRepeat, ITrans, IUp } from './icons';
 import { inputStyle as inputSt } from './styles';
 import { useT } from '../i18n/LangProvider';
 import { useBreakpoint } from '../lib/useBreakpoint';
@@ -33,6 +40,9 @@ type Props = {
   onClose: () => void;
   initialTx?: Transaction;
   transactions?: Transaction[];
+  // When provided (add mode only), the "repeat every month" toggle is shown and
+  // a checked submit creates a recurring rule instead of a one-off transaction.
+  onAddRecurring?: (input: RecurringInput) => void;
 };
 
 const BUCKETS: ReadonlyArray<readonly [Bucket, MessageKey]> = [
@@ -50,11 +60,14 @@ export function AddTxModal({
   onClose,
   initialTx,
   transactions,
+  onAddRecurring,
 }: Props) {
-  const { t } = useT();
+  const { t, tp } = useT();
   const bp = useBreakpoint();
   const isMobile = bp === 'mobile';
   const isEdit = !!initialTx;
+  const canRecur = !isEdit && !!onAddRecurring;
+  const [recurring, setRecurring] = useState(false);
   const [type, setType] = useState<TxType>(initialTx?.type ?? 'income');
   const [bucket, setBucket] = useState<Bucket>(initialTx?.bucket ?? 'bank');
   const [toBucket, setToBucket] = useState<Bucket>(initialTx?.toBucket ?? 'cash');
@@ -108,6 +121,20 @@ export function AddTxModal({
     if (!isTransfer && !cat) return setError(t('modal.error.pickCategory'));
     const num = Number(amount);
     if (!amount || Number.isNaN(num) || num <= 0) return setError(t('modal.error.amount'));
+    if (canRecur && recurring && onAddRecurring) {
+      onAddRecurring({
+        type,
+        category: isTransfer ? '' : cat,
+        description: desc,
+        amount: num,
+        bucket,
+        ...(isTransfer ? { toBucket } : {}),
+        dayOfMonth: Number(date.slice(8, 10)),
+        startDate: date,
+      });
+      onClose();
+      return;
+    }
     const tx: NewTx = {
       type,
       category: isTransfer ? '' : cat,
@@ -398,12 +425,78 @@ export function AddTxModal({
           style={{ ...inputSt, direction: 'ltr', textAlign: 'start' }}
         />
 
-        <FLabel>{t('modal.field.attachments')}</FLabel>
-        <AttachmentsList
-          attachments={attachments}
-          onAdd={(a) => setAttachments((prev) => [...prev, a])}
-          onRemove={(id) => setAttachments((prev) => prev.filter((a) => a.id !== id))}
-        />
+        {canRecur && (
+          <div style={{ marginBottom: 20 }}>
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={recurring}
+              onClick={() => setRecurring((v) => !v)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                width: '100%',
+                padding: '14px 16px',
+                borderRadius: 12,
+                border: '2px solid',
+                borderColor: recurring ? 'var(--teal)' : 'var(--border)',
+                background: recurring ? 'var(--teal-light)' : '#fff',
+                cursor: 'pointer',
+                textAlign: 'start',
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  flexShrink: 0,
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                  border: '2px solid',
+                  borderColor: recurring ? 'var(--teal)' : 'var(--text-muted)',
+                  background: recurring ? 'var(--teal)' : '#fff',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 15,
+                  fontWeight: 700,
+                }}
+              >
+                {recurring ? '✓' : ''}
+              </span>
+              <span
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: recurring ? 'var(--teal)' : 'var(--text)',
+                }}
+              >
+                <IRepeat s={18} /> {t('modal.field.recurring')}
+              </span>
+            </button>
+            {recurring && (
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 8 }}>
+                {tp('modal.recurring.hint', { day: String(Number(date.slice(8, 10))) })}
+              </p>
+            )}
+          </div>
+        )}
+
+        {!recurring && (
+          <>
+            <FLabel>{t('modal.field.attachments')}</FLabel>
+            <AttachmentsList
+              attachments={attachments}
+              onAdd={(a) => setAttachments((prev) => [...prev, a])}
+              onRemove={(id) => setAttachments((prev) => prev.filter((a) => a.id !== id))}
+            />
+          </>
+        )}
 
         {error && (
           <p

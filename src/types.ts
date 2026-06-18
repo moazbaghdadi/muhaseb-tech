@@ -18,6 +18,9 @@ export type Transaction = {
   attachments: Attachment[];
   bucket: Bucket;
   toBucket?: Bucket;
+  // Set on transactions generated from a recurring rule. Informational only
+  // (drives the 🔁 badge); a generated transaction is otherwise an ordinary tx.
+  recurringId?: string;
 };
 
 export type Categories = {
@@ -25,10 +28,33 @@ export type Categories = {
   expense: string[];
 };
 
+// A monthly recurring rule. Generates one transaction per month on `dayOfMonth`
+// (clamped to the month length). Open-ended: recurs until the user deletes it.
+export type RecurringRule = {
+  id: string;
+  type: TxType;
+  category: string;
+  description: string;
+  amount: number;
+  bucket: Bucket;
+  toBucket?: Bucket; // transfer only
+  dayOfMonth: number; // 1–31; clamped to each month's length when generating
+  startDate: string; // ISO YYYY-MM-DD — first occurrence
+  // Watermark: occurrences on or before this date have already been generated.
+  // Advanced as months are materialized so a manually-deleted occurrence never
+  // resurrects on the next load.
+  lastMaterialized: string;
+};
+
 export type AppData = {
   tx: Transaction[];
   cats: Categories;
+  recurring: RecurringRule[];
 };
+
+// Fields a user supplies for a recurring rule; the store assigns `id` and the
+// `lastMaterialized` watermark.
+export type RecurringInput = Omit<RecurringRule, 'id' | 'lastMaterialized'>;
 
 export type SnapshotDescriptor =
   | { kind: 'root' }
@@ -50,6 +76,10 @@ export type SnapshotDescriptor =
   | { kind: 'importAppend'; txCount: number; catCount: number }
   | { kind: 'importReplace'; txCount: number; catCount: number }
   | { kind: 'firstRunSeed'; bank: number; cash: number }
+  | { kind: 'addRecurring'; ruleType: TxType; category: string; amount: number }
+  | { kind: 'updateRecurring'; ruleType: TxType; category: string; amount: number }
+  | { kind: 'deleteRecurring'; ruleType: TxType; category: string; amount: number }
+  | { kind: 'materializeRecurring'; count: number }
   | { kind: 'restore'; target: SnapshotDescriptor };
 
 export type Snapshot = {
@@ -82,7 +112,7 @@ export type ServerState = {
 import type { CurrencyCode } from './lib/currency';
 
 export type DiskFormat = {
-  schemaVersion: 5;
+  schemaVersion: 6;
   history: History;
   deviceId: string;
   currency: CurrencyCode;
@@ -93,6 +123,7 @@ export type Screen =
   | 'dashboard'
   | 'transactions'
   | 'categories'
+  | 'recurring'
   | 'history'
   | 'import-export'
   | 'settings';

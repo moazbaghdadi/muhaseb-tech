@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Attachment, Bucket, Categories, Transaction } from '../types';
+import type { Attachment, Bucket, Categories, RecurringInput, Transaction } from '../types';
 import { Card } from '../components/Card';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
@@ -8,6 +8,7 @@ import { AddTxModal, type NewTx } from '../components/AddTxModal';
 import { AttachmentsModal } from '../components/AttachmentsModal';
 import { IPlus, ISearch } from '../components/icons';
 import { inputStyle } from '../components/styles';
+import { sumByType } from '../lib/balance';
 import { useT } from '../i18n/LangProvider';
 import { useBreakpoint } from '../lib/useBreakpoint';
 import type { MessageKey } from '../i18n/messages';
@@ -21,6 +22,7 @@ type Props = {
   onAdd: (tx: NewTx) => void;
   onEdit: (id: string, tx: NewTx) => void;
   onDelete: (id: string) => void;
+  onAddRecurring: (input: RecurringInput) => void;
   onAddAttachment: (txId: string, attachment: Attachment) => void;
   onRemoveAttachment: (txId: string, attachmentId: string) => void;
 };
@@ -31,10 +33,11 @@ export function Transactions({
   onAdd,
   onEdit,
   onDelete,
+  onAddRecurring,
   onAddAttachment,
   onRemoveAttachment,
 }: Props) {
-  const { t } = useT();
+  const { t, fmtMoney, fmtMoneyAbs } = useT();
   const bp = useBreakpoint();
   const isMobile = bp === 'mobile';
   const [showModal, setShowModal] = useState(false);
@@ -67,6 +70,10 @@ export function Transactions({
       );
     })
     .sort((a, b) => b.date.localeCompare(a.date));
+
+  const incomeTotal = sumByType(filtered, 'income');
+  const expenseTotal = sumByType(filtered, 'expense');
+  const net = incomeTotal - expenseTotal;
 
   return (
     <div>
@@ -185,6 +192,37 @@ export function Transactions({
         </div>
       </div>
 
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: isMobile ? 8 : 14,
+          marginBottom: isMobile ? 16 : 20,
+        }}
+      >
+        <TotalCard
+          label={t('tx.totals.income')}
+          value={fmtMoneyAbs(incomeTotal)}
+          color="var(--green)"
+          bg="var(--green-light)"
+          compact={isMobile}
+        />
+        <TotalCard
+          label={t('tx.totals.expense')}
+          value={fmtMoneyAbs(expenseTotal)}
+          color="var(--red)"
+          bg="var(--red-light)"
+          compact={isMobile}
+        />
+        <TotalCard
+          label={t('tx.totals.net')}
+          value={fmtMoney(net)}
+          color={net >= 0 ? 'var(--teal)' : 'var(--red)'}
+          bg="var(--teal-light)"
+          compact={isMobile}
+        />
+      </div>
+
       {filtered.length === 0 ? (
         <EmptyState msg={t('tx.empty')} />
       ) : isMobile ? (
@@ -251,6 +289,7 @@ export function Transactions({
           categories={categories}
           transactions={transactions}
           onSubmit={onAdd}
+          onAddRecurring={onAddRecurring}
           onClose={() => setShowModal(false)}
         />
       )}
@@ -273,6 +312,59 @@ export function Transactions({
           onClose={() => setAttachmentsTxId(null)}
         />
       )}
+    </div>
+  );
+}
+
+function TotalCard({
+  label,
+  value,
+  color,
+  bg,
+  compact,
+}: {
+  label: string;
+  value: string;
+  color: string;
+  bg: string;
+  compact: boolean;
+}) {
+  return (
+    <div
+      style={{
+        background: bg,
+        borderRadius: 14,
+        padding: compact ? '10px 10px' : '14px 16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        minWidth: 0,
+      }}
+    >
+      <span
+        style={{
+          fontSize: 13,
+          color: 'var(--text-muted)',
+          fontWeight: 600,
+          minWidth: 0,
+          overflowWrap: 'anywhere',
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontSize: compact ? 16 : 20,
+          fontWeight: 700,
+          color,
+          minWidth: 0,
+          overflowWrap: 'anywhere',
+          direction: 'ltr',
+          textAlign: 'start',
+        }}
+      >
+        {value}
+      </span>
     </div>
   );
 }

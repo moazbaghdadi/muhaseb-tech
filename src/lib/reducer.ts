@@ -1,4 +1,11 @@
-import type { AppData, Attachment, Categories, SnapshotDescriptor, Transaction } from '../types';
+import type {
+  AppData,
+  Attachment,
+  Categories,
+  RecurringRule,
+  SnapshotDescriptor,
+  Transaction,
+} from '../types';
 import type { MessageKey } from '../i18n/messages';
 
 type TFn = (key: MessageKey) => string;
@@ -29,11 +36,16 @@ export type Action =
       categoryName: string;
       bankDescription: string;
       cashDescription: string;
-    };
+    }
+  | { kind: 'addRecurring'; rule: RecurringRule; txs: Transaction[] }
+  | { kind: 'updateRecurring'; id: string; rule: RecurringRule }
+  | { kind: 'deleteRecurring'; id: string }
+  | { kind: 'materializeRecurring'; txs: Transaction[]; throughDate: string };
 
 export const INIT_DATA: AppData = {
   cats: { income: [], expense: [] },
   tx: [],
+  recurring: [],
 };
 
 function trimmedNonEmpty(s: string): string | null {
@@ -110,8 +122,11 @@ export function reduce(state: AppData, action: Action): AppData {
       };
     }
     case 'importData': {
+      // Import only carries transactions + categories; recurring rules are
+      // preserved untouched in both modes.
       if (action.mode === 'replace') {
         return {
+          ...state,
           tx: [...action.transactions],
           cats: {
             income: [...action.cats.income],
@@ -120,6 +135,7 @@ export function reduce(state: AppData, action: Action): AppData {
         };
       }
       return {
+        ...state,
         tx: [...state.tx, ...action.transactions],
         cats: {
           income: unionPreserveOrder(state.cats.income, action.cats.income),
@@ -163,6 +179,55 @@ export function reduce(state: AppData, action: Action): AppData {
         cats: { ...state.cats, income },
         tx: [...state.tx, ...newTxs],
       };
+    }
+    case 'addRecurring': {
+      const r = action.rule;
+      if (r.amount <= 0) return state;
+      if (r.type === 'transfer') {
+        if (!r.toBucket || r.toBucket === r.bucket) return state;
+      }
+      // The store pre-computes which occurrences are actually due (date <= today)
+      // and passes them in, so a future-dated rule never creates a transaction
+      // that would skew the current balance. The rule's watermark already
+      // reflects these txs.
+      return {
+        ...state,
+        recurring: [...state.recurring, r],
+        tx: [...state.tx, ...action.txs],
+      };
+    }
+    case 'updateRecurring': {
+      const r = action.rule;
+      if (r.amount <= 0) return state;
+      if (r.type === 'transfer') {
+        if (!r.toBucket || r.toBucket === r.bucket) return state;
+      }
+      if (!state.recurring.some((x) => x.id === action.id)) return state;
+      // Editing a rule never rewrites already-generated transactions.
+      return {
+        ...state,
+        recurring: state.recurring.map((x) =>
+          x.id === action.id ? { ...r, id: action.id } : x,
+        ),
+      };
+    }
+    case 'deleteRecurring': {
+      if (!state.recurring.some((x) => x.id === action.id)) return state;
+      // Stops the series; past generated transactions are real and stay.
+      return {
+        ...state,
+        recurring: state.recurring.filter((x) => x.id !== action.id),
+      };
+    }
+    case 'materializeRecurring': {
+      // No-op when nothing is due, so apply() creates no snapshot.
+      if (action.txs.length === 0) return state;
+      const recurring = state.recurring.map((r) =>
+        r.lastMaterialized < action.throughDate
+          ? { ...r, lastMaterialized: action.throughDate }
+          : r,
+      );
+      return { ...state, tx: [...state.tx, ...action.txs], recurring };
     }
   }
 }
@@ -240,11 +305,43 @@ export function actionToDescriptor(state: AppData, action: Action): SnapshotDesc
     case 'seedOpeningBalances': {
       return { kind: 'firstRunSeed', bank: action.bank, cash: action.cash };
     }
+    case 'addRecurring':
+      return {
+        kind: 'addRecurring',
+        ruleType: action.rule.type,
+        category: action.rule.category,
+        amount: action.rule.amount,
+      };
+    case 'updateRecurring':
+      return {
+        kind: 'updateRecurring',
+        ruleType: action.rule.type,
+        category: action.rule.category,
+        amount: action.rule.amount,
+      };
+    case 'deleteRecurring': {
+      const r = state.recurring.find((x) => x.id === action.id);
+      return {
+        kind: 'deleteRecurring',
+        ruleType: r?.type ?? 'expense',
+        category: r?.category ?? '',
+        amount: r?.amount ?? 0,
+      };
+    }
+    case 'materializeRecurring':
+      return { kind: 'materializeRecurring', count: action.txs.length };
   }
 }
 
 function bucketLabel(b: 'bank' | 'cash', t: TFn): string {
   return t(b === 'bank' ? 'bucket.bank' : 'bucket.cash');
+}
+
+function recurringLabel(prefix: string, category: string, amount: number): string {
+  const parts = [prefix];
+  if (category) parts.push(category); // transfers have no category
+  parts.push(amount.toLocaleString('en-US'));
+  return parts.join(' · ');
 }
 
 export function formatDescriptor(d: SnapshotDescriptor, t: TFn): string {
@@ -297,6 +394,14 @@ export function formatDescriptor(d: SnapshotDescriptor, t: TFn): string {
         ? t('undo.firstRunSeed')
         : `${t('undo.firstRunSeed')} · ${parts.join(' · ')}`;
     }
+    case 'addRecurring':
+      return recurringLabel(t('undo.addRecurring'), d.category, d.amount);
+    case 'updateRecurring':
+      return recurringLabel(t('undo.editRecurring'), d.category, d.amount);
+    case 'deleteRecurring':
+      return recurringLabel(t('undo.deleteRecurring'), d.category, d.amount);
+    case 'materializeRecurring':
+      return `${t('undo.materializeRecurring')} · ${d.count.toLocaleString('en-US')}`;
     case 'restore':
       return `${t('history.restorePrefix')}: ${formatDescriptor(d.target, t)}`;
   }

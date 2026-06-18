@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { Bucket, Transaction } from '../types';
-import { IDown, IPaperclip, IPencil, ITrans, ITrash, IUp } from './icons';
+import { IDown, IPaperclip, IPencil, IRepeat, ITrans, ITrash, IUp } from './icons';
 import { useT } from '../i18n/LangProvider';
 import { attachmentsSupported } from '../lib/attachments';
 import type { MessageKey } from '../i18n/messages';
@@ -39,6 +39,15 @@ export function TxRow({ t, onDelete, onEdit, onOpenAttachments, tableMode }: Pro
   const badgeBg = isTransfer ? 'var(--teal-light)' : inc ? 'var(--green-light)' : 'var(--red-light)';
   const badgeColor = amountColor;
   const TypeIcon = isTransfer ? ITrans : inc ? IUp : IDown;
+  const recurringMark = t.recurringId ? (
+    <span
+      title={tr('tx.recurringBadge')}
+      aria-label={tr('tx.recurringBadge')}
+      style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--teal)' }}
+    >
+      <IRepeat s={14} />
+    </span>
+  ) : null;
   const deleteAria = tr('tx.deleteAria');
   const editAria = tr('tx.editAria');
   const attCount = t.attachments.length;
@@ -97,20 +106,23 @@ export function TxRow({ t, onDelete, onEdit, onOpenAttachments, tableMode }: Pro
       <tr style={{ borderBottom: '1px solid var(--border)' }}>
         <td style={tdS}>{dayStr}</td>
         <td style={tdS}>
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '4px 10px',
-              borderRadius: 20,
-              fontSize: 13,
-              fontWeight: 700,
-              background: badgeBg,
-              color: badgeColor,
-            }}
-          >
-            <TypeIcon s={14} /> {typeLabel}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 10px',
+                borderRadius: 20,
+                fontSize: 13,
+                fontWeight: 700,
+                background: badgeBg,
+                color: badgeColor,
+              }}
+            >
+              <TypeIcon s={14} /> {typeLabel}
+            </span>
+            {recurringMark}
           </span>
         </td>
         <td style={{ ...tdS, direction: 'ltr', textAlign: 'start' }}>{bucketCellText}</td>
@@ -195,9 +207,15 @@ export function TxRow({ t, onDelete, onEdit, onOpenAttachments, tableMode }: Pro
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
           }}
         >
-          {t.description || (isTransfer ? typeLabel : t.category)}
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {t.description || (isTransfer ? typeLabel : t.category)}
+          </span>
+          {recurringMark}
         </p>
         <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
           {bucketCellText} · {isTransfer ? typeLabel : t.category} · {dayStr}

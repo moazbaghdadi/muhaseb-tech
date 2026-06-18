@@ -9,6 +9,7 @@ const ar = {
 
   'nav.dashboard': 'لوحة التحكم',
   'nav.transactions': 'المعاملات',
+  'nav.recurring': 'المتكررة',
   'nav.categories': 'الفئات',
   'nav.history': 'السجل',
   'nav.importExport': 'استيراد/تصدير',
@@ -24,6 +25,7 @@ const ar = {
   'lang.en': 'English',
 
   'confirm.deleteTx': 'هل تريد حذف هذه المعاملة؟',
+  'confirm.deleteRecurring': 'هل تريد إيقاف هذه المعاملة المتكررة؟ ستبقى المعاملات التي أُنشئت سابقًا.',
   'confirm.deleteCat': 'هل تريد حذف الفئة "{name}"؟',
   'confirm.confirm': 'تأكيد',
   'confirm.cancel': 'إلغاء',
@@ -58,6 +60,9 @@ const ar = {
   'tx.search': 'ابحث',
   'tx.searchPlaceholder': 'ابحث...',
   'tx.empty': 'لا توجد معاملات',
+  'tx.totals.income': 'إجمالي الدخل',
+  'tx.totals.expense': 'إجمالي المصروفات',
+  'tx.totals.net': 'الصافي',
   'tx.col.date': 'التاريخ',
   'tx.col.type': 'النوع',
   'tx.col.bucket': 'الحساب',
@@ -83,6 +88,21 @@ const ar = {
   'modal.field.amount': 'المبلغ',
   'modal.field.amountShort': 'المبلغ',
   'modal.field.date': 'التاريخ',
+  'modal.field.recurring': 'كرّر كل شهر',
+  'modal.recurring.hint': 'تتكرر يوم {day} من كل شهر',
+  'modal.field.dayOfMonth': 'يوم الشهر',
+  'modal.error.dayOfMonth': 'يرجى إدخال يوم بين 1 و31',
+  'tx.recurringBadge': 'معاملة متكررة',
+  'recurring.title': 'المعاملات المتكررة',
+  'recurring.subtitle': 'معاملات تتكرر تلقائيًا كل شهر',
+  'recurring.add': 'إضافة معاملة متكررة',
+  'recurring.empty': 'لا توجد معاملات متكررة',
+  'recurring.everyMonth': 'يوم {day} من كل شهر',
+  'recurring.next': 'التالية: {date}',
+  'recurring.editAria': 'تعديل المعاملة المتكررة',
+  'recurring.deleteAria': 'إيقاف المعاملة المتكررة',
+  'recurring.modal.title': 'معاملة متكررة جديدة',
+  'recurring.modal.editTitle': 'تعديل المعاملة المتكررة',
   'modal.field.descPlaceholder': 'مثال: إيجار المكتب — أبريل',
   'modal.field.descSuggestions': 'اقتراحات',
   'modal.noCategories': 'لا توجد فئات — أضفها من شاشة "الفئات" أولاً',
@@ -209,6 +229,10 @@ const ar = {
   'tx.openingBalance.cash': 'الرصيد الافتتاحي للنقد',
 
   'undo.firstRunSeed': 'إعداد أولي',
+  'undo.addRecurring': 'إضافة معاملة متكررة',
+  'undo.editRecurring': 'تعديل معاملة متكررة',
+  'undo.deleteRecurring': 'إيقاف معاملة متكررة',
+  'undo.materializeRecurring': 'إنشاء معاملات متكررة',
 } as const;
 
 const de: Record<keyof typeof ar, string> = {
@@ -217,6 +241,7 @@ const de: Record<keyof typeof ar, string> = {
 
   'nav.dashboard': 'Übersicht',
   'nav.transactions': 'Buchungen',
+  'nav.recurring': 'Wiederkehrend',
   'nav.categories': 'Kategorien',
   'nav.history': 'Verlauf',
   'nav.importExport': 'Importieren/Exportieren',
@@ -232,6 +257,8 @@ const de: Record<keyof typeof ar, string> = {
   'lang.en': 'English',
 
   'confirm.deleteTx': 'Diese Buchung wirklich löschen?',
+  'confirm.deleteRecurring':
+    'Diese wiederkehrende Buchung stoppen? Bereits erstellte Buchungen bleiben erhalten.',
   'confirm.deleteCat': 'Kategorie „{name}" wirklich löschen?',
   'confirm.confirm': 'Bestätigen',
   'confirm.cancel': 'Abbrechen',
@@ -266,6 +293,9 @@ const de: Record<keyof typeof ar, string> = {
   'tx.search': 'Suchen',
   'tx.searchPlaceholder': 'Suchen …',
   'tx.empty': 'Keine Buchungen',
+  'tx.totals.income': 'Einnahmen gesamt',
+  'tx.totals.expense': 'Ausgaben gesamt',
+  'tx.totals.net': 'Saldo',
   'tx.col.date': 'Datum',
   'tx.col.type': 'Typ',
   'tx.col.bucket': 'Konto',
@@ -291,6 +321,21 @@ const de: Record<keyof typeof ar, string> = {
   'modal.field.amount': 'Betrag',
   'modal.field.amountShort': 'Betrag',
   'modal.field.date': 'Datum',
+  'modal.field.recurring': 'Jeden Monat wiederholen',
+  'modal.recurring.hint': 'Wiederholt sich am {day}. jedes Monats',
+  'modal.field.dayOfMonth': 'Tag im Monat',
+  'modal.error.dayOfMonth': 'Bitte einen Tag zwischen 1 und 31 eingeben',
+  'tx.recurringBadge': 'Wiederkehrende Buchung',
+  'recurring.title': 'Wiederkehrende Buchungen',
+  'recurring.subtitle': 'Buchungen, die jeden Monat automatisch wiederkehren',
+  'recurring.add': 'Wiederkehrende Buchung',
+  'recurring.empty': 'Keine wiederkehrenden Buchungen',
+  'recurring.everyMonth': 'Tag {day} jedes Monats',
+  'recurring.next': 'Nächste: {date}',
+  'recurring.editAria': 'Wiederkehrende Buchung bearbeiten',
+  'recurring.deleteAria': 'Wiederkehrende Buchung stoppen',
+  'recurring.modal.title': 'Neue wiederkehrende Buchung',
+  'recurring.modal.editTitle': 'Wiederkehrende Buchung bearbeiten',
   'modal.field.descPlaceholder': 'z. B. Büromiete – April',
   'modal.field.descSuggestions': 'Vorschläge',
   'modal.noCategories': 'Noch keine Kategorien – bitte zuerst im Bereich „Kategorien" anlegen',
@@ -422,6 +467,10 @@ const de: Record<keyof typeof ar, string> = {
   'tx.openingBalance.cash': 'Anfangsbestand Bargeld',
 
   'undo.firstRunSeed': 'Erste Einrichtung',
+  'undo.addRecurring': 'Wiederkehrende Buchung hinzugefügt',
+  'undo.editRecurring': 'Wiederkehrende Buchung bearbeitet',
+  'undo.deleteRecurring': 'Wiederkehrende Buchung gestoppt',
+  'undo.materializeRecurring': 'Wiederkehrende Buchungen erstellt',
 };
 
 const en: Record<keyof typeof ar, string> = {
@@ -430,6 +479,7 @@ const en: Record<keyof typeof ar, string> = {
 
   'nav.dashboard': 'Dashboard',
   'nav.transactions': 'Transactions',
+  'nav.recurring': 'Recurring',
   'nav.categories': 'Categories',
   'nav.history': 'History',
   'nav.importExport': 'Import/Export',
@@ -445,6 +495,8 @@ const en: Record<keyof typeof ar, string> = {
   'lang.en': 'English',
 
   'confirm.deleteTx': 'Delete this transaction?',
+  'confirm.deleteRecurring':
+    'Stop this recurring transaction? Already-created transactions will stay.',
   'confirm.deleteCat': 'Delete the category "{name}"?',
   'confirm.confirm': 'Confirm',
   'confirm.cancel': 'Cancel',
@@ -479,6 +531,9 @@ const en: Record<keyof typeof ar, string> = {
   'tx.search': 'Search',
   'tx.searchPlaceholder': 'Search…',
   'tx.empty': 'No transactions',
+  'tx.totals.income': 'Total income',
+  'tx.totals.expense': 'Total expense',
+  'tx.totals.net': 'Net',
   'tx.col.date': 'Date',
   'tx.col.type': 'Type',
   'tx.col.bucket': 'Account',
@@ -504,6 +559,21 @@ const en: Record<keyof typeof ar, string> = {
   'modal.field.amount': 'Amount',
   'modal.field.amountShort': 'Amount',
   'modal.field.date': 'Date',
+  'modal.field.recurring': 'Repeat every month',
+  'modal.recurring.hint': 'Repeats on day {day} of every month',
+  'modal.field.dayOfMonth': 'Day of month',
+  'modal.error.dayOfMonth': 'Please enter a day between 1 and 31',
+  'tx.recurringBadge': 'Recurring transaction',
+  'recurring.title': 'Recurring transactions',
+  'recurring.subtitle': 'Transactions that repeat automatically every month',
+  'recurring.add': 'Add recurring',
+  'recurring.empty': 'No recurring transactions yet',
+  'recurring.everyMonth': 'Day {day} of every month',
+  'recurring.next': 'Next: {date}',
+  'recurring.editAria': 'Edit recurring transaction',
+  'recurring.deleteAria': 'Stop recurring transaction',
+  'recurring.modal.title': 'New recurring transaction',
+  'recurring.modal.editTitle': 'Edit recurring transaction',
   'modal.field.descPlaceholder': 'e.g. Office rent — April',
   'modal.field.descSuggestions': 'Suggestions',
   'modal.noCategories': 'No categories yet — please add one from the "Categories" screen first',
@@ -634,6 +704,10 @@ const en: Record<keyof typeof ar, string> = {
   'tx.openingBalance.cash': 'Initial cash balance',
 
   'undo.firstRunSeed': 'Initial setup',
+  'undo.addRecurring': 'Add recurring entry',
+  'undo.editRecurring': 'Edit recurring entry',
+  'undo.deleteRecurring': 'Stop recurring entry',
+  'undo.materializeRecurring': 'Create recurring entries',
 };
 
 export type MessageKey = keyof typeof ar;
