@@ -48,14 +48,23 @@
 | Tablet `640–1100px` | Icon-only sidebar, 2-col cards, centered modals, card list |
 | Desktop `> 1100px` | Full labeled sidebar (240px), 4-col stats, data tables, centered modals |
 
-## App Structure (3 screens)
+## App Structure (4 screens)
 1. **لوحة التحكم** / **Übersicht** (Dashboard) — balance hero, monthly/yearly stats, recent transactions, category bar chart (desktop)
-2. **المعاملات** / **Buchungen** (Transactions) — filter tabs, search, table (desktop) or cards (mobile/tablet), add transaction modal
-3. **الفئات** / **Kategorien** (Categories) — manage income & expense categories, side-by-side on tablet/desktop
+2. **المعاملات** / **Buchungen** (Transactions) — filter tabs, search, table (desktop) or cards (mobile/tablet), add transaction modal. A summary bar above the list shows total income / total expense / net for the **currently filtered** set (reuses `sumByType`; transfers excluded, matching the Dashboard).
+3. **المتكررة** / **Wiederkehrend** (Recurring) — manage monthly recurring rules (view / add / edit / stop). Available on all platforms (desktop + mobile). See § Recurring transactions below.
+4. **الفئات** / **Kategorien** (Categories) — manage income & expense categories, side-by-side on tablet/desktop
 
 ## App Structure (desktop addition)
-4. **السجل** / **Verlauf** (History) — desktop-only screen showing the undo-tree as a flat-with-branches list; lets the user restore any past version.
-5. **استيراد/تصدير** / **Import/Export** — Tauri-only screen for exporting the current state to an `.xlsx` file and importing one back. Import shows a preview with skipped-row diagnostics, then offers append vs replace; replace gates on `window.confirm()`. The import is a single undo-tree snapshot.
+5. **السجل** / **Verlauf** (History) — desktop-only screen showing the undo-tree as a flat-with-branches list; lets the user restore any past version.
+6. **استيراد/تصدير** / **Import/Export** — Tauri-only screen for exporting the current state to an `.xlsx` file and importing one back. Import shows a preview with skipped-row diagnostics, then offers append vs replace; replace gates on `window.confirm()`. The import is a single undo-tree snapshot.
+
+## Recurring transactions
+- A **`RecurringRule`** (see `src/types.ts`) is a monthly template: `{ type, category, description, amount, bucket, toBucket?, dayOfMonth, startDate, lastMaterialized }`. Rules live in `AppData.recurring[]`, separate from the transactions they generate. Open-ended — a rule recurs until the user deletes it (no end date / count).
+- Generated transactions carry `recurringId` (drives the 🔁 badge in `TxRow`); they are otherwise ordinary transactions. Editing or deleting a generated transaction does **not** touch the rule, and editing/deleting a rule does **not** rewrite already-generated transactions (they are real money events).
+- **Watermark model:** `lastMaterialized` is an exclusive lower bound — occurrences in `(lastMaterialized, today]` are pending. This is why a manually-deleted occurrence never resurrects on the next load. All occurrence math is pure and lives in `src/lib/recurrence.ts` (`monthlyOccurrences` clamps day 31 → Feb 28/29; `pendingOccurrences`, `nextOccurrence`, `prevDayIso`, `occurrenceToTx`).
+- **Creation paths:** the Transactions add-modal has a "Repeat every month" toggle (add mode only — `onAddRecurring`), and the Recurring screen has its own add/edit modal (`RecurringRuleModal`, day-of-month picker, no attachments). The **store** (`useStore.addRecurring`) decides which occurrences are actually due (`<= today`) and passes the built transactions into the reducer, so a future `startDate` never creates a balance-skewing transaction before its time.
+- **Backfill:** `useStore` runs one catch-up materialization on load (`materializeRecurring`, a single undo-tree snapshot; no-op when nothing is due), so reopening the app after a gap generates every missed month.
+- Reducer actions: `addRecurring` / `updateRecurring` / `deleteRecurring` / `materializeRecurring`, each with its own undo descriptor. The Recurring screen is **not** mobile-hidden (unlike History / Import-Export).
 
 ## Tech Stack (desktop app)
 - **Tauri 2** wrapper, **React 18 + TypeScript + Vite** UI
@@ -77,11 +86,11 @@
 - Detected at runtime via `isTauri()`:
   - In Tauri window → `@tauri-apps/plugin-fs` writes atomically to `$AppConfig/muhaseb-tech/data.json`. `$AppConfig` is Tauri's `BaseDirectory.AppConfig`, which **already includes the bundle identifier** as a path segment — so the full on-disk path is e.g. `%APPDATA%\com.codetiquette.muhasebtech\muhaseb-tech\data.json` on Windows, `~/Library/Application Support/com.codetiquette.muhasebtech/muhaseb-tech/data.json` on macOS, `~/.config/com.codetiquette.muhasebtech/muhaseb-tech/data.json` on Linux.
   - In browser → `localStorage` key `muhaseb-tech:data`
-- Disk format (v5): `{ schemaVersion: 5, history, deviceId, currency, serverState? }`.
+- Disk format (v6): `{ schemaVersion: 6, history, deviceId, currency, serverState? }`. (v6 added `AppData.recurring[]` inside every snapshot — see § Recurring transactions.)
   - `deviceId` is a per-install UUID generated on first load (or during v3 → v4 migration). It also stamps every new `Snapshot.deviceId` so the sync layer can attribute authorship.
   - `currency` is a top-level `CurrencyCode` (one of EUR/USD/GBP/SYP/SAR/AED/TRY — registry at `src/lib/currency.ts`). Stored as a sibling of `history` rather than inside snapshots, so changing the currency from Settings does **not** create an undo-tree entry. Add new codes to `src/lib/currency.ts` and they automatically surface in both the first-run modal and Settings. Symbol position is per-currency (EUR/USD/GBP/TRY prefix; SYP/SAR/AED suffix) and language-independent — number separators still come from the active `Lang`.
   - `serverState` (optional) holds sync bookkeeping when the user enables sync from Settings. Absent on disk = local-only mode. See `docs/sync-architecture.md` for the full sync design.
-- Bump `SCHEMA_VERSION` and extend `parseAndMigrate` in `src/lib/persist.ts` for new migrations. Current migrators: v3 → v5 (generates a `deviceId`, defaults `currency` to EUR), v4 → v5 (defaults `currency` to EUR, preserves the existing `deviceId`). v1 and v2 have no migrator; old data is discarded silently. The v3 → v4 step (folded into v3 → v5) leaves pre-v4 snapshots' `deviceId` absent on purpose — the sync layer treats absent `deviceId` as "this device" when reconciling. Unknown `currency` values on a v5 file are silently backfilled to EUR rather than rejected.
+- Bump `SCHEMA_VERSION` and extend `parseAndMigrate` in `src/lib/persist.ts` for new migrations. Current migrators: v3 → v6, v4 → v6, v5 → v6. The v3/v4 steps generate/preserve a `deviceId` and default `currency` to EUR; the **v5 → v6** step backfills `recurring: []` into every snapshot's `data` (`backfillRecurring`, which all branches run through and is idempotent — a malformed v6 file missing the field is repaired on load too). v1 and v2 have no migrator; old data is discarded silently. The v3 → v4 step leaves pre-v4 snapshots' `deviceId` absent on purpose — the sync layer treats absent `deviceId` as "this device" when reconciling. Unknown `currency` values are silently backfilled to EUR rather than rejected.
 
 ## First-run
 - True cold start = `load()` returns `null`. `useStore` flips `isFirstRun` to `true` and leaves `currency` as `null` until the modal completes; the auto-save effect is gated on `currency !== null` so we never persist a half-configured file.
@@ -151,6 +160,7 @@ Mobile port plan lives at `~/.claude/plans/mobile-port.md`. Phase-0 decisions re
 |---|---|---|---|
 | Dashboard | ✅ | ✅ | Core feature |
 | Transactions | ✅ | ✅ | Core feature |
+| Recurring | ✅ | ✅ | Core feature; no native APIs involved, so it ships on mobile too |
 | Categories | ✅ | ✅ | Core feature |
 | Settings (language) | ✅ | ✅ | Verify Arabic RTL on the AVD during Phase 3 |
 | History (undo-tree browser) | ✅ | ❌ hide | Already desktop-only by design; small-screen UX cost not worth a v1 port |
