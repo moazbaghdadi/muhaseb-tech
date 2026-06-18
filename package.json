@@ -1,7 +1,7 @@
 {
   "name": "muhaseb-tech",
   "private": true,
-  "version": "0.7.3",
+  "version": "0.8.0",
   "type": "module",
   "description": "Cross-platform desktop budget tracker (محاسب تك) with on-disk persistence and undo-tree versioning.",
   "scripts": {
