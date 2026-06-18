@@ -6,7 +6,6 @@ import type {
   SnapshotDescriptor,
   Transaction,
 } from '../types';
-import { occurrenceToTx } from './recurrence';
 import type { MessageKey } from '../i18n/messages';
 
 type TFn = (key: MessageKey) => string;
@@ -38,7 +37,7 @@ export type Action =
       bankDescription: string;
       cashDescription: string;
     }
-  | { kind: 'addRecurring'; rule: RecurringRule; firstTxId: string }
+  | { kind: 'addRecurring'; rule: RecurringRule; txs: Transaction[] }
   | { kind: 'updateRecurring'; id: string; rule: RecurringRule }
   | { kind: 'deleteRecurring'; id: string }
   | { kind: 'materializeRecurring'; txs: Transaction[]; throughDate: string };
@@ -187,13 +186,14 @@ export function reduce(state: AppData, action: Action): AppData {
       if (r.type === 'transfer') {
         if (!r.toBucket || r.toBucket === r.bucket) return state;
       }
-      // Materialize the first occurrence (on startDate) together with the rule
-      // so it appears immediately; the rule's watermark already covers it.
-      const firstTx = occurrenceToTx(r, r.startDate, action.firstTxId);
+      // The store pre-computes which occurrences are actually due (date <= today)
+      // and passes them in, so a future-dated rule never creates a transaction
+      // that would skew the current balance. The rule's watermark already
+      // reflects these txs.
       return {
         ...state,
         recurring: [...state.recurring, r],
-        tx: [...state.tx, firstTx],
+        tx: [...state.tx, ...action.txs],
       };
     }
     case 'updateRecurring': {

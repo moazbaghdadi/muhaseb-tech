@@ -52,6 +52,10 @@ export type AppData = {
   recurring: RecurringRule[];
 };
 
+// Fields a user supplies for a recurring rule; the store assigns `id` and the
+// `lastMaterialized` watermark.
+export type RecurringInput = Omit<RecurringRule, 'id' | 'lastMaterialized'>;
+
 export type SnapshotDescriptor =
   | { kind: 'root' }
   | { kind: 'legacy'; text: string }

@@ -19,6 +19,13 @@ function daysInMonth(year: number, month0: number): number {
   return new Date(year, month0 + 1, 0).getDate();
 }
 
+/** The ISO date one day before `iso`. Used as an exclusive lower watermark. */
+export function prevDayIso(iso: string): string {
+  const d = parseDate(iso);
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
 // Defensive iteration cap (100 years of months) so a bad watermark can never
 // spin forever.
 const MAX_MONTHS = 1200;

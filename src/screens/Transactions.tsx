@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Attachment, Bucket, Categories, Transaction } from '../types';
+import type { Attachment, Bucket, Categories, RecurringInput, Transaction } from '../types';
 import { Card } from '../components/Card';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
@@ -22,6 +22,7 @@ type Props = {
   onAdd: (tx: NewTx) => void;
   onEdit: (id: string, tx: NewTx) => void;
   onDelete: (id: string) => void;
+  onAddRecurring: (input: RecurringInput) => void;
   onAddAttachment: (txId: string, attachment: Attachment) => void;
   onRemoveAttachment: (txId: string, attachmentId: string) => void;
 };
@@ -32,6 +33,7 @@ export function Transactions({
   onAdd,
   onEdit,
   onDelete,
+  onAddRecurring,
   onAddAttachment,
   onRemoveAttachment,
 }: Props) {
@@ -287,6 +289,7 @@ export function Transactions({
           categories={categories}
           transactions={transactions}
           onSubmit={onAdd}
+          onAddRecurring={onAddRecurring}
           onClose={() => setShowModal(false)}
         />
       )}

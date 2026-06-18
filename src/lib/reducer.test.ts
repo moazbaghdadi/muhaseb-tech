@@ -820,8 +820,20 @@ describe('reduce: recurring rules', () => {
     lastMaterialized: '2026-01-01',
   };
 
-  it('addRecurring stores the rule and materializes the first occurrence', () => {
-    const next = reduce(blank, { kind: 'addRecurring', rule: baseRule, firstTxId: 'tx-1' });
+  const firstTx = {
+    id: 'tx-1',
+    date: '2026-01-01',
+    type: 'expense' as const,
+    category: 'Rent',
+    description: 'Monthly rent',
+    amount: 500,
+    attachments: [],
+    bucket: 'bank' as const,
+    recurringId: 'rule-1',
+  };
+
+  it('addRecurring stores the rule and appends the supplied due transactions', () => {
+    const next = reduce(blank, { kind: 'addRecurring', rule: baseRule, txs: [firstTx] });
     expect(next.recurring).toHaveLength(1);
     expect(next.tx).toHaveLength(1);
     expect(next.tx[0]).toMatchObject({
@@ -833,8 +845,14 @@ describe('reduce: recurring rules', () => {
     });
   });
 
+  it('addRecurring creates no transaction when nothing is due yet (future start)', () => {
+    const next = reduce(blank, { kind: 'addRecurring', rule: baseRule, txs: [] });
+    expect(next.recurring).toHaveLength(1);
+    expect(next.tx).toHaveLength(0);
+  });
+
   it('addRecurring rejects a non-positive amount and an invalid transfer', () => {
-    expect(reduce(blank, { kind: 'addRecurring', rule: { ...baseRule, amount: 0 }, firstTxId: 'x' })).toBe(
+    expect(reduce(blank, { kind: 'addRecurring', rule: { ...baseRule, amount: 0 }, txs: [] })).toBe(
       blank,
     );
     const badTransfer = {
@@ -843,11 +861,11 @@ describe('reduce: recurring rules', () => {
       bucket: 'bank' as const,
       toBucket: 'bank' as const,
     };
-    expect(reduce(blank, { kind: 'addRecurring', rule: badTransfer, firstTxId: 'x' })).toBe(blank);
+    expect(reduce(blank, { kind: 'addRecurring', rule: badTransfer, txs: [] })).toBe(blank);
   });
 
   it('updateRecurring edits the rule without touching generated transactions', () => {
-    const added = reduce(blank, { kind: 'addRecurring', rule: baseRule, firstTxId: 'tx-1' });
+    const added = reduce(blank, { kind: 'addRecurring', rule: baseRule, txs: [firstTx] });
     const edited = reduce(added, {
       kind: 'updateRecurring',
       id: 'rule-1',
@@ -859,14 +877,14 @@ describe('reduce: recurring rules', () => {
   });
 
   it('deleteRecurring removes the rule but keeps generated transactions', () => {
-    const added = reduce(blank, { kind: 'addRecurring', rule: baseRule, firstTxId: 'tx-1' });
+    const added = reduce(blank, { kind: 'addRecurring', rule: baseRule, txs: [firstTx] });
     const deleted = reduce(added, { kind: 'deleteRecurring', id: 'rule-1' });
     expect(deleted.recurring).toHaveLength(0);
     expect(deleted.tx).toHaveLength(1);
   });
 
   it('materializeRecurring appends txs and advances the watermark', () => {
-    const added = reduce(blank, { kind: 'addRecurring', rule: baseRule, firstTxId: 'tx-1' });
+    const added = reduce(blank, { kind: 'addRecurring', rule: baseRule, txs: [firstTx] });
     const generated = {
       id: 'tx-2',
       date: '2026-02-01',
@@ -888,7 +906,7 @@ describe('reduce: recurring rules', () => {
   });
 
   it('materializeRecurring with no txs is a no-op (same reference, no snapshot)', () => {
-    const added = reduce(blank, { kind: 'addRecurring', rule: baseRule, firstTxId: 'tx-1' });
+    const added = reduce(blank, { kind: 'addRecurring', rule: baseRule, txs: [firstTx] });
     const next = reduce(added, {
       kind: 'materializeRecurring',
       txs: [],
@@ -899,9 +917,9 @@ describe('reduce: recurring rules', () => {
 
   it('describes recurring actions for the undo label', () => {
     expect(
-      describeAction(blank, { kind: 'addRecurring', rule: baseRule, firstTxId: 'x' }, tAr),
+      describeAction(blank, { kind: 'addRecurring', rule: baseRule, txs: [] }, tAr),
     ).toContain(messages.ar['undo.addRecurring']);
-    const added = reduce(blank, { kind: 'addRecurring', rule: baseRule, firstTxId: 'tx-1' });
+    const added = reduce(blank, { kind: 'addRecurring', rule: baseRule, txs: [firstTx] });
     expect(describeAction(added, { kind: 'deleteRecurring', id: 'rule-1' }, tAr)).toContain(
       messages.ar['undo.deleteRecurring'],
     );

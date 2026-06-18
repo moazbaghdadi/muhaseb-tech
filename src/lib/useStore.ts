@@ -4,6 +4,8 @@ import type {
   Attachment,
   Categories,
   History,
+  RecurringInput,
+  RecurringRule,
   Screen,
   Transaction,
 } from '../types';
@@ -29,9 +31,12 @@ import {
   type CategoryType,
 } from './reducer';
 import { emptyDisk, load, makeDeviceId, save } from './persist';
+import { monthlyOccurrences, occurrenceToTx, pendingOccurrences, prevDayIso } from './recurrence';
 import { useT } from '../i18n/LangProvider';
 import { todayIso } from './format';
 import type { CurrencyCode } from './currency';
+
+export type { RecurringInput } from '../types';
 
 const newId = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -57,6 +62,9 @@ export type Store = {
   addTx: (tx: Omit<Transaction, 'id'>) => void;
   editTx: (id: string, tx: Omit<Transaction, 'id'>) => void;
   deleteTx: (id: string) => void;
+  addRecurring: (input: RecurringInput) => void;
+  editRecurring: (id: string, input: RecurringInput) => void;
+  deleteRecurring: (id: string) => void;
   addCategory: (type: CategoryType, name: string) => void;
   removeCategory: (type: CategoryType, name: string) => void;
   addAttachment: (txId: string, attachment: Attachment) => void;
@@ -138,6 +146,35 @@ export function useStore(): Store {
     }, 300);
     return () => window.clearTimeout(handle);
   }, [history, ready, deviceId, currency]);
+
+  // Catch-up materialization: once after load, generate every recurring
+  // occurrence that came due while the app was closed (backfilling missed
+  // months) as a single undo-tree snapshot. No-op when nothing is due.
+  const materializedRef = useRef(false);
+  useEffect(() => {
+    if (!ready || materializedRef.current) return;
+    materializedRef.current = true;
+    setHistory((h) => {
+      const data = currentData(h);
+      if (data.recurring.length === 0) return h;
+      const today = todayIso();
+      const pending = pendingOccurrences(data.recurring, today);
+      if (pending.length === 0) return h;
+      const txs = pending.map((p) => occurrenceToTx(p.rule, p.date, newId()));
+      const action: Action = { kind: 'materializeRecurring', txs, throughDate: today };
+      const next = reduce(data, action);
+      if (next === data) return h;
+      const descriptor = actionToDescriptor(data, action);
+      const label = formatDescriptor(descriptor, tRef.current);
+      return commit(
+        h,
+        next,
+        label,
+        { deviceId: deviceIdRef.current ?? undefined },
+        descriptor,
+      );
+    });
+  }, [ready]);
 
   const setCurrency = useCallback((code: CurrencyCode) => {
     setCurrencyState(code);
@@ -231,6 +268,32 @@ export function useStore(): Store {
     addTx: (tx) => apply({ kind: 'addTx', tx, id: newId() }),
     editTx: (id, tx) => apply({ kind: 'updateTx', id, tx }),
     deleteTx: (id) => apply({ kind: 'deleteTx', id }),
+    addRecurring: (input) => {
+      const id = newId();
+      const today = todayIso();
+      // Occurrences already due (startDate..today). A future startDate yields
+      // none — those get backfilled later, so the balance is never skewed by a
+      // not-yet-happened entry.
+      const dueDates = monthlyOccurrences(input.dayOfMonth, prevDayIso(input.startDate), today);
+      const lastMaterialized = dueDates.length > 0 ? today : prevDayIso(input.startDate);
+      const rule: RecurringRule = { ...input, id, lastMaterialized };
+      const txs = dueDates.map((date) => occurrenceToTx(rule, date, newId()));
+      apply({ kind: 'addRecurring', rule, txs });
+    },
+    editRecurring: (id, input) => {
+      const existing = data.recurring.find((r) => r.id === id);
+      if (!existing) return;
+      // Preserve the watermark and original start so an edit never re-backfills.
+      const rule: RecurringRule = {
+        ...existing,
+        ...input,
+        id,
+        startDate: existing.startDate,
+        lastMaterialized: existing.lastMaterialized,
+      };
+      apply({ kind: 'updateRecurring', id, rule });
+    },
+    deleteRecurring: (id) => apply({ kind: 'deleteRecurring', id }),
     addCategory: (type, name) => apply({ kind: 'addCategory', type, name }),
     removeCategory: (type, name) => apply({ kind: 'removeCategory', type, name }),
     addAttachment: (txId, attachment) => apply({ kind: 'addAttachment', txId, attachment }),

@@ -198,3 +198,32 @@ export const ISettings = ({ s }: IconProps = {}) => (
     }
   />
 );
+
+export const IRepeat = ({ s }: IconProps = {}) => (
+  <Ic
+    size={s ?? 22}
+    d={
+      <>
+        <path d="M17 1l4 4-4 4" />
+        <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+        <path d="M7 23l-4-4 4-4" />
+        <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+      </>
+    }
+  />
+);
+
+export const IRecurring = ({ s }: IconProps = {}) => (
+  <Ic
+    size={s ?? 22}
+    d={
+      <>
+        <rect x="3" y="4" width="18" height="17" rx="2" />
+        <path d="M3 9h18" />
+        <path d="M8 2v3" />
+        <path d="M16 2v3" />
+        <path d="M14.5 15l-1.2-1a3 3 0 1 0 .2 3.6" />
+      </>
+    }
+  />
+);

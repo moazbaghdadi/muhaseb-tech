@@ -6,6 +6,7 @@ import { UpdateModal } from './components/UpdateModal';
 import { FirstRunModal } from './components/FirstRunModal';
 import { Dashboard } from './screens/Dashboard';
 import { Transactions } from './screens/Transactions';
+import { RecurringScreen } from './screens/Recurring';
 import { CategoriesScreen } from './screens/Categories';
 import { HistoryScreen } from './screens/History';
 import { ImportExportScreen } from './screens/ImportExport';
@@ -78,6 +79,11 @@ export default function App() {
     store.removeCategory(type, name);
   }
 
+  async function confirmDeleteRecurring(id: string) {
+    if (!(await confirm(t('confirm.deleteRecurring')))) return;
+    store.deleteRecurring(id);
+  }
+
   return (
     <CurrencyProvider currency={store.currency}>
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
@@ -125,8 +131,18 @@ export default function App() {
               onAdd={store.addTx}
               onEdit={store.editTx}
               onDelete={confirmDelete}
+              onAddRecurring={store.addRecurring}
               onAddAttachment={store.addAttachment}
               onRemoveAttachment={store.removeAttachment}
+            />
+          )}
+          {effectiveScreen === 'recurring' && (
+            <RecurringScreen
+              rules={store.data.recurring}
+              categories={store.data.cats}
+              onAdd={store.addRecurring}
+              onEdit={store.editRecurring}
+              onDelete={confirmDeleteRecurring}
             />
           )}
           {effectiveScreen === 'categories' && (
