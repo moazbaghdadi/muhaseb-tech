@@ -17,6 +17,7 @@ describe('excel: round-trip', () => {
   it('preserves transaction fields across build → parse (modulo regenerated ids)', () => {
     const data: AppData = {
       cats: { income: ['Salary'], expense: ['Rent', 'Groceries'] },
+      recurring: [],
       tx: [
         makeTx({
           date: '2026-04-01',
@@ -82,6 +83,7 @@ describe('excel: round-trip', () => {
   it('survives empty income or expense category lists', () => {
     const data: AppData = {
       cats: { income: [], expense: ['Only expense'] },
+      recurring: [],
       tx: [],
     };
     const result = parseWorkbook(buildWorkbook(data));
@@ -93,6 +95,7 @@ describe('excel: round-trip', () => {
   it('regenerates fresh ids and drops attachments', () => {
     const data: AppData = {
       cats: { income: [], expense: [] },
+      recurring: [],
       tx: [
         {
           id: 'should-be-replaced',

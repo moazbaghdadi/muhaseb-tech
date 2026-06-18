@@ -74,19 +74,19 @@ describe('load', () => {
     expect(await load()).toBeNull();
   });
 
-  it('migrates v3 → v5 by generating a deviceId and defaulting currency to EUR', async () => {
+  it('migrates v3 → v6 by generating a deviceId and defaulting currency to EUR', async () => {
     const v3 = { schemaVersion: 3, history: { rootId: 'r', currentId: 'r', nodes: {} } };
     fsState.files.set(FULL_PATH, JSON.stringify(v3));
     const loaded = await load();
     expect(loaded).not.toBeNull();
-    expect(loaded?.schemaVersion).toBe(5);
+    expect(loaded?.schemaVersion).toBe(6);
     expect(loaded?.history).toEqual(v3.history);
     expect(typeof loaded?.deviceId).toBe('string');
     expect(loaded?.deviceId).not.toHaveLength(0);
     expect(loaded?.currency).toBe('EUR');
   });
 
-  it('migrates v4 → v5 by defaulting currency to EUR and preserving deviceId', async () => {
+  it('migrates v4 → v6 by defaulting currency to EUR and preserving deviceId', async () => {
     const v4 = {
       schemaVersion: 4,
       history: { rootId: 'r', currentId: 'r', nodes: {} },
@@ -94,22 +94,22 @@ describe('load', () => {
     };
     fsState.files.set(FULL_PATH, JSON.stringify(v4));
     const loaded = await load();
-    expect(loaded?.schemaVersion).toBe(5);
+    expect(loaded?.schemaVersion).toBe(6);
     expect(loaded?.deviceId).toBe('existing-device');
     expect(loaded?.currency).toBe('EUR');
   });
 
-  it('backfills a missing deviceId during v4 → v5 migration', async () => {
+  it('backfills a missing deviceId during v4 → v6 migration', async () => {
     const incomplete = { schemaVersion: 4, history: { rootId: 'r', currentId: 'r', nodes: {} } };
     fsState.files.set(FULL_PATH, JSON.stringify(incomplete));
     const loaded = await load();
-    expect(loaded?.schemaVersion).toBe(5);
+    expect(loaded?.schemaVersion).toBe(6);
     expect(typeof loaded?.deviceId).toBe('string');
     expect(loaded?.deviceId).not.toHaveLength(0);
     expect(loaded?.currency).toBe('EUR');
   });
 
-  it('preserves serverState during v4 → v5 migration', async () => {
+  it('preserves serverState during v4 → v6 migration', async () => {
     const v4 = {
       schemaVersion: 4,
       history: { rootId: 'r', currentId: 'r', nodes: {} },
@@ -131,25 +131,67 @@ describe('load', () => {
     };
     fsState.files.set(FULL_PATH, JSON.stringify(broken));
     const loaded = await load();
+    expect(loaded?.schemaVersion).toBe(6);
     expect(loaded?.currency).toBe('EUR');
   });
 
-  it('passes through a valid v5 file unchanged', async () => {
+  it('migrates v5 → v6, backfilling recurring:[] into every snapshot', async () => {
     const v5 = {
       schemaVersion: 5,
-      history: { rootId: 'r', currentId: 'r', nodes: {} },
+      history: {
+        rootId: 'r',
+        currentId: 'r',
+        nodes: {
+          r: {
+            id: 'r',
+            parentId: null,
+            childIds: [],
+            createdAt: 0,
+            label: 'root',
+            data: { tx: [], cats: { income: [], expense: [] } },
+          },
+        },
+      },
       deviceId: 'd',
       currency: 'USD',
     };
     fsState.files.set(FULL_PATH, JSON.stringify(v5));
     const loaded = await load();
-    expect(loaded).toEqual(v5);
+    expect(loaded?.schemaVersion).toBe(6);
+    expect(loaded?.deviceId).toBe('d');
+    expect(loaded?.currency).toBe('USD');
+    expect(loaded?.history.nodes.r.data.recurring).toEqual([]);
+  });
+
+  it('passes through a valid v6 file unchanged', async () => {
+    const v6 = {
+      schemaVersion: 6,
+      history: {
+        rootId: 'r',
+        currentId: 'r',
+        nodes: {
+          r: {
+            id: 'r',
+            parentId: null,
+            childIds: [],
+            createdAt: 0,
+            label: 'root',
+            data: { tx: [], cats: { income: [], expense: [] }, recurring: [] },
+          },
+        },
+      },
+      deviceId: 'd',
+      currency: 'USD',
+    };
+    fsState.files.set(FULL_PATH, JSON.stringify(v6));
+    const loaded = await load();
+    expect(loaded).toEqual(v6);
   });
 
   it('returns the parsed payload on success', async () => {
     const d: DiskFormat = emptyDisk(
       createHistory(
-        { tx: [], cats: { income: [], expense: [] } },
+        { tx: [], cats: { income: [], expense: [] }, recurring: [] },
         { idGen: () => 'fixed-id', now: () => 0 },
       ),
       'device-test',
@@ -164,7 +206,7 @@ describe('save', () => {
   it('writes to tmp first, then renames to the final path (atomic)', async () => {
     const d: DiskFormat = emptyDisk(
       createHistory(
-        { tx: [], cats: { income: [], expense: [] } },
+        { tx: [], cats: { income: [], expense: [] }, recurring: [] },
         { idGen: () => 'fixed-id', now: () => 0 },
       ),
       'device-test',
@@ -179,14 +221,14 @@ describe('save', () => {
   it('overwrites an existing file safely', async () => {
     const a: DiskFormat = emptyDisk(
       createHistory(
-        { tx: [], cats: { income: [], expense: [] } },
+        { tx: [], cats: { income: [], expense: [] }, recurring: [] },
         { idGen: () => 'a', now: () => 0 },
       ),
       'device-a',
     );
     const b: DiskFormat = emptyDisk(
       createHistory(
-        { tx: [], cats: { income: ['x'], expense: [] } },
+        { tx: [], cats: { income: ['x'], expense: [] }, recurring: [] },
         { idGen: () => 'b', now: () => 0 },
       ),
       'device-b',
@@ -203,7 +245,7 @@ describe('round-trip', () => {
   it('save then load returns the same payload', async () => {
     const d: DiskFormat = emptyDisk(
       createHistory(
-        { tx: [], cats: { income: ['A'], expense: ['B'] } },
+        { tx: [], cats: { income: ['A'], expense: ['B'] }, recurring: [] },
         { idGen: () => 'rt', now: () => 0 },
       ),
       'device-rt',
@@ -217,11 +259,11 @@ describe('round-trip', () => {
 describe('emptyDisk', () => {
   it('wraps a History with the current schemaVersion and the given deviceId, defaulting currency to EUR', () => {
     const h = createHistory(
-      { tx: [], cats: { income: [], expense: [] } },
+      { tx: [], cats: { income: [], expense: [] }, recurring: [] },
       { idGen: () => 'r', now: () => 0 },
     );
     const d = emptyDisk(h, 'device-x');
-    expect(d.schemaVersion).toBe(5);
+    expect(d.schemaVersion).toBe(6);
     expect(d.history).toBe(h);
     expect(d.deviceId).toBe('device-x');
     expect(d.currency).toBe('EUR');
@@ -229,7 +271,7 @@ describe('emptyDisk', () => {
 
   it('accepts an explicit currency', () => {
     const h = createHistory(
-      { tx: [], cats: { income: [], expense: [] } },
+      { tx: [], cats: { income: [], expense: [] }, recurring: [] },
       { idGen: () => 'r', now: () => 0 },
     );
     const d = emptyDisk(h, 'device-x', 'SAR');

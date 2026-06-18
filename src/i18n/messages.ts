@@ -212,6 +212,10 @@ const ar = {
   'tx.openingBalance.cash': 'الرصيد الافتتاحي للنقد',
 
   'undo.firstRunSeed': 'إعداد أولي',
+  'undo.addRecurring': 'إضافة معاملة متكررة',
+  'undo.editRecurring': 'تعديل معاملة متكررة',
+  'undo.deleteRecurring': 'إيقاف معاملة متكررة',
+  'undo.materializeRecurring': 'إنشاء معاملات متكررة',
 } as const;
 
 const de: Record<keyof typeof ar, string> = {
@@ -428,6 +432,10 @@ const de: Record<keyof typeof ar, string> = {
   'tx.openingBalance.cash': 'Anfangsbestand Bargeld',
 
   'undo.firstRunSeed': 'Erste Einrichtung',
+  'undo.addRecurring': 'Wiederkehrende Buchung hinzugefügt',
+  'undo.editRecurring': 'Wiederkehrende Buchung bearbeitet',
+  'undo.deleteRecurring': 'Wiederkehrende Buchung gestoppt',
+  'undo.materializeRecurring': 'Wiederkehrende Buchungen erstellt',
 };
 
 const en: Record<keyof typeof ar, string> = {
@@ -643,6 +651,10 @@ const en: Record<keyof typeof ar, string> = {
   'tx.openingBalance.cash': 'Initial cash balance',
 
   'undo.firstRunSeed': 'Initial setup',
+  'undo.addRecurring': 'Add recurring entry',
+  'undo.editRecurring': 'Edit recurring entry',
+  'undo.deleteRecurring': 'Stop recurring entry',
+  'undo.materializeRecurring': 'Create recurring entries',
 };
 
 export type MessageKey = keyof typeof ar;

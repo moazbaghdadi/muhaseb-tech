@@ -3,7 +3,26 @@ import { loadTauri, saveTauri } from './persist-tauri';
 import { loadWeb, saveWeb } from './persist-web';
 import { DEFAULT_CURRENCY, isCurrencyCode, type CurrencyCode } from './currency';
 
-const SCHEMA_VERSION = 5 as const;
+const SCHEMA_VERSION = 6 as const;
+
+// v5 → v6: the AppData inside every snapshot gained a `recurring` array.
+// Backfill it to [] on any node that predates the field so downstream code can
+// rely on `data.recurring` always being present. Idempotent; safe to run on
+// already-migrated history too.
+function backfillRecurring(history: History): History {
+  let changed = false;
+  const nodes: History['nodes'] = {};
+  for (const [id, node] of Object.entries(history.nodes)) {
+    const data = node.data as { recurring?: unknown };
+    if (Array.isArray(data.recurring)) {
+      nodes[id] = node;
+    } else {
+      changed = true;
+      nodes[id] = { ...node, data: { ...node.data, recurring: [] } };
+    }
+  }
+  return changed ? { ...history, nodes } : history;
+}
 
 export const FILE = 'data.json';
 export const TMP_FILE = 'data.json.tmp';
@@ -56,10 +75,11 @@ export function parseAndMigrate(parsed: unknown): DiskFormat | null {
   // v3 → v4: generate a deviceId. Pre-v4 snapshots stay unauthored; the sync
   // layer treats them as authored by this device on first push.
   // v4 → v5: default currency to EUR (preserves current behavior).
+  // v5 → v6: backfill `recurring: []` into every snapshot (backfillRecurring).
   if (obj.schemaVersion === 3) {
     return {
       schemaVersion: SCHEMA_VERSION,
-      history: obj.history as History,
+      history: backfillRecurring(obj.history as History),
       deviceId: makeDeviceId(),
       currency: DEFAULT_CURRENCY,
     };
@@ -70,23 +90,38 @@ export function parseAndMigrate(parsed: unknown): DiskFormat | null {
       typeof obj.deviceId === 'string' && obj.deviceId ? obj.deviceId : makeDeviceId();
     return {
       schemaVersion: SCHEMA_VERSION,
-      history: obj.history as History,
+      history: backfillRecurring(obj.history as History),
       deviceId,
       currency: DEFAULT_CURRENCY,
       ...(obj.serverState ? { serverState: obj.serverState as DiskFormat['serverState'] } : {}),
     };
   }
 
+  if (obj.schemaVersion === 5) {
+    const deviceId =
+      typeof obj.deviceId === 'string' && obj.deviceId ? obj.deviceId : makeDeviceId();
+    const currency = isCurrencyCode(obj.currency) ? obj.currency : DEFAULT_CURRENCY;
+    return {
+      schemaVersion: SCHEMA_VERSION,
+      history: backfillRecurring(obj.history as History),
+      deviceId,
+      currency,
+      ...(obj.serverState ? { serverState: obj.serverState as DiskFormat['serverState'] } : {}),
+    };
+  }
+
   if (obj.schemaVersion === SCHEMA_VERSION) {
-    const v5 = parsed as DiskFormat;
+    const v6 = parsed as DiskFormat;
     const patch: Partial<DiskFormat> = {};
-    if (typeof v5.deviceId !== 'string' || !v5.deviceId) {
+    if (typeof v6.deviceId !== 'string' || !v6.deviceId) {
       patch.deviceId = makeDeviceId();
     }
-    if (!isCurrencyCode(v5.currency)) {
+    if (!isCurrencyCode(v6.currency)) {
       patch.currency = DEFAULT_CURRENCY;
     }
-    return Object.keys(patch).length === 0 ? v5 : { ...v5, ...patch };
+    const history = backfillRecurring(v6.history);
+    if (history !== v6.history) patch.history = history;
+    return Object.keys(patch).length === 0 ? v6 : { ...v6, ...patch };
   }
   return null;
 }
