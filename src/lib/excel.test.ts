@@ -18,6 +18,7 @@ describe('excel: round-trip', () => {
     const data: AppData = {
       cats: { income: ['Salary'], expense: ['Rent', 'Groceries'] },
       recurring: [],
+      opening: { bank: 0, cash: 0 },
       tx: [
         makeTx({
           date: '2026-04-01',
@@ -84,6 +85,7 @@ describe('excel: round-trip', () => {
     const data: AppData = {
       cats: { income: [], expense: ['Only expense'] },
       recurring: [],
+      opening: { bank: 0, cash: 0 },
       tx: [],
     };
     const result = parseWorkbook(buildWorkbook(data));
@@ -96,6 +98,7 @@ describe('excel: round-trip', () => {
     const data: AppData = {
       cats: { income: [], expense: [] },
       recurring: [],
+      opening: { bank: 0, cash: 0 },
       tx: [
         {
           id: 'should-be-replaced',

@@ -31,7 +31,7 @@ body {
   font-family: var(--app-font);
   background: var(--bg);
   color: var(--text);
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 button,
@@ -54,7 +54,7 @@ input[type='number'] {
 }
 
 #root {
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 ::-webkit-scrollbar {

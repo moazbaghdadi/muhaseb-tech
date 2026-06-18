@@ -26,17 +26,7 @@ export type Action =
       transactions: Transaction[];
       cats: Categories;
     }
-  | {
-      kind: 'seedOpeningBalances';
-      bank: number;
-      cash: number;
-      bankTxId: string;
-      cashTxId: string;
-      dateIso: string;
-      categoryName: string;
-      bankDescription: string;
-      cashDescription: string;
-    }
+  | { kind: 'setOpeningBalances'; bank: number; cash: number }
   | { kind: 'addRecurring'; rule: RecurringRule; txs: Transaction[] }
   | { kind: 'updateRecurring'; id: string; rule: RecurringRule }
   | { kind: 'deleteRecurring'; id: string }
@@ -46,6 +36,7 @@ export const INIT_DATA: AppData = {
   cats: { income: [], expense: [] },
   tx: [],
   recurring: [],
+  opening: { bank: 0, cash: 0 },
 };
 
 function trimmedNonEmpty(s: string): string | null {
@@ -143,42 +134,14 @@ export function reduce(state: AppData, action: Action): AppData {
         },
       };
     }
-    case 'seedOpeningBalances': {
-      if (action.bank <= 0 && action.cash <= 0) return state;
-      const newTxs: Transaction[] = [];
-      if (action.bank > 0) {
-        newTxs.push({
-          id: action.bankTxId,
-          date: action.dateIso,
-          type: 'income',
-          category: action.categoryName,
-          description: action.bankDescription,
-          amount: action.bank,
-          attachments: [],
-          bucket: 'bank',
-        });
-      }
-      if (action.cash > 0) {
-        newTxs.push({
-          id: action.cashTxId,
-          date: action.dateIso,
-          type: 'income',
-          category: action.categoryName,
-          description: action.cashDescription,
-          amount: action.cash,
-          attachments: [],
-          bucket: 'cash',
-        });
-      }
-      const trimmedCat = action.categoryName.trim();
-      const income = trimmedCat && !state.cats.income.includes(trimmedCat)
-        ? [...state.cats.income, trimmedCat]
-        : state.cats.income;
-      return {
-        ...state,
-        cats: { ...state.cats, income },
-        tx: [...state.tx, ...newTxs],
-      };
+    case 'setOpeningBalances': {
+      // Opening balances are a first-class field, not transactions: setting
+      // them replaces the stored pair. Non-finite inputs fall back to 0;
+      // negative values are allowed (e.g. an overdrawn account).
+      const bank = Number.isFinite(action.bank) ? action.bank : 0;
+      const cash = Number.isFinite(action.cash) ? action.cash : 0;
+      if (state.opening.bank === bank && state.opening.cash === cash) return state;
+      return { ...state, opening: { bank, cash } };
     }
     case 'addRecurring': {
       const r = action.rule;
@@ -302,8 +265,8 @@ export function actionToDescriptor(state: AppData, action: Action): SnapshotDesc
         ? { kind: 'importReplace', txCount, catCount }
         : { kind: 'importAppend', txCount, catCount };
     }
-    case 'seedOpeningBalances': {
-      return { kind: 'firstRunSeed', bank: action.bank, cash: action.cash };
+    case 'setOpeningBalances': {
+      return { kind: 'setOpening', bank: action.bank, cash: action.cash };
     }
     case 'addRecurring':
       return {
@@ -384,15 +347,10 @@ export function formatDescriptor(d: SnapshotDescriptor, t: TFn): string {
       return `${t('undo.importAppend')} · ${d.txCount.toLocaleString('en-US')} ${t('tx.title')}`;
     case 'importReplace':
       return `${t('undo.importReplace')} · ${d.txCount.toLocaleString('en-US')} ${t('tx.title')}`;
-    case 'firstRunSeed': {
-      const parts: string[] = [];
-      if (d.bank > 0)
-        parts.push(`${t('bucket.bank')} · ${d.bank.toLocaleString('en-US')}`);
-      if (d.cash > 0)
-        parts.push(`${t('bucket.cash')} · ${d.cash.toLocaleString('en-US')}`);
-      return parts.length === 0
-        ? t('undo.firstRunSeed')
-        : `${t('undo.firstRunSeed')} · ${parts.join(' · ')}`;
+    case 'setOpening': {
+      const bank = `${t('bucket.bank')} · ${d.bank.toLocaleString('en-US')}`;
+      const cash = `${t('bucket.cash')} · ${d.cash.toLocaleString('en-US')}`;
+      return `${t('undo.setOpening')} · ${bank} · ${cash}`;
     }
     case 'addRecurring':
       return recurringLabel(t('undo.addRecurring'), d.category, d.amount);

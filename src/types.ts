@@ -28,6 +28,14 @@ export type Categories = {
   expense: string[];
 };
 
+// Starting balances per bucket, set on first run or from Settings. Folded into
+// the displayed balances (see src/lib/balance.ts) but never rendered as a
+// transaction. May be negative (e.g. an overdrawn account).
+export type OpeningBalances = {
+  bank: number;
+  cash: number;
+};
+
 // A monthly recurring rule. Generates one transaction per month on `dayOfMonth`
 // (clamped to the month length). Open-ended: recurs until the user deletes it.
 export type RecurringRule = {
@@ -50,6 +58,7 @@ export type AppData = {
   tx: Transaction[];
   cats: Categories;
   recurring: RecurringRule[];
+  opening: OpeningBalances;
 };
 
 // Fields a user supplies for a recurring rule; the store assigns `id` and the
@@ -75,7 +84,7 @@ export type SnapshotDescriptor =
   | { kind: 'removeAttachment'; filename: string | null }
   | { kind: 'importAppend'; txCount: number; catCount: number }
   | { kind: 'importReplace'; txCount: number; catCount: number }
-  | { kind: 'firstRunSeed'; bank: number; cash: number }
+  | { kind: 'setOpening'; bank: number; cash: number }
   | { kind: 'addRecurring'; ruleType: TxType; category: string; amount: number }
   | { kind: 'updateRecurring'; ruleType: TxType; category: string; amount: number }
   | { kind: 'deleteRecurring'; ruleType: TxType; category: string; amount: number }
@@ -112,7 +121,7 @@ export type ServerState = {
 import type { CurrencyCode } from './lib/currency';
 
 export type DiskFormat = {
-  schemaVersion: 6;
+  schemaVersion: 7;
   history: History;
   deviceId: string;
   currency: CurrencyCode;

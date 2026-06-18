@@ -59,7 +59,7 @@ export default function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: '100vh',
+          minHeight: '100dvh',
           fontSize: 18,
           color: 'var(--text-muted)',
         }}
@@ -86,7 +86,7 @@ export default function App() {
 
   return (
     <CurrencyProvider currency={store.currency}>
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100dvh', overflow: 'hidden' }}>
       <Sidebar screen={store.screen} setScreen={store.setScreen} />
       <main style={{ flex: 1, overflow: 'auto' }}>
         {!isMobile && (
@@ -117,12 +117,16 @@ export default function App() {
             maxWidth: 1100,
             margin: '0 auto',
             padding: isMobile
-              ? 'max(56px, calc(env(safe-area-inset-top) + 36px)) 14px calc(72px + env(safe-area-inset-bottom)) 14px'
+              ? 'max(56px, calc(env(safe-area-inset-top) + 36px)) 14px calc(96px + env(safe-area-inset-bottom)) 14px'
               : '32px 36px',
           }}
         >
           {effectiveScreen === 'dashboard' && (
-            <Dashboard transactions={store.data.tx} setScreen={store.setScreen} />
+            <Dashboard
+              transactions={store.data.tx}
+              opening={store.data.opening}
+              setScreen={store.setScreen}
+            />
           )}
           {effectiveScreen === 'transactions' && (
             <Transactions
@@ -162,6 +166,8 @@ export default function App() {
             <SettingsScreen
               currency={store.currency ?? 'EUR'}
               onSetCurrency={store.setCurrency}
+              opening={store.data.opening}
+              onSetOpening={store.setOpeningBalances}
             />
           )}
         </div>

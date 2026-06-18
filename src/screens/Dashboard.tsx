@@ -1,4 +1,4 @@
-import type { Transaction, Screen } from '../types';
+import type { OpeningBalances, Transaction, Screen } from '../types';
 import { parseDate } from '../lib/format';
 import { bucketBalance, sumByType, totalBalance } from '../lib/balance';
 import { Card } from '../components/Card';
@@ -12,10 +12,11 @@ import { useBreakpoint } from '../lib/useBreakpoint';
 
 type Props = {
   transactions: Transaction[];
+  opening: OpeningBalances;
   setScreen: (s: Screen) => void;
 };
 
-export function Dashboard({ transactions, setScreen }: Props) {
+export function Dashboard({ transactions, opening, setScreen }: Props) {
   const bp = useBreakpoint();
   const isMobile = bp === 'mobile';
   const { t, fmtMoney, fmtMoneyAbs, fmtMonth } = useT();
@@ -35,9 +36,9 @@ export function Dashboard({ transactions, setScreen }: Props) {
   const mN = mI - mE;
   const yI = sumByType(yearly, 'income');
   const yE = sumByType(yearly, 'expense');
-  const total = totalBalance(transactions);
-  const bankBal = bucketBalance(transactions, 'bank');
-  const cashBal = bucketBalance(transactions, 'cash');
+  const total = totalBalance(transactions, opening);
+  const bankBal = bucketBalance(transactions, 'bank', opening);
+  const cashBal = bucketBalance(transactions, 'cash', opening);
 
   const recent = [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
 

@@ -18,7 +18,12 @@ import {
 } from './history';
 import type { AppData } from '../types';
 
-const empty: AppData = { tx: [], cats: { income: [], expense: [] }, recurring: [] };
+const empty: AppData = {
+  tx: [],
+  cats: { income: [], expense: [] },
+  recurring: [],
+  opening: { bank: 0, cash: 0 },
+};
 
 function withTx(label: string): AppData {
   return {
@@ -36,6 +41,7 @@ function withTx(label: string): AppData {
     ],
     cats: { income: [], expense: [] },
     recurring: [],
+    opening: { bank: 0, cash: 0 },
   };
 }
 

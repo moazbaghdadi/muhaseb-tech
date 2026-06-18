@@ -224,11 +224,15 @@ const ar = {
   'firstRun.help.balances': 'اتركها 0 إذا لم ترغب في تحديد رصيد افتتاحي.',
   'firstRun.cta': 'ابدأ الآن',
 
-  'category.openingBalance': 'رصيد افتتاحي',
-  'tx.openingBalance.bank': 'الرصيد الافتتاحي للحساب البنكي',
-  'tx.openingBalance.cash': 'الرصيد الافتتاحي للنقد',
+  'settings.section.opening': 'الرصيد الافتتاحي',
+  'settings.opening.help':
+    'حدّد رصيدك الافتتاحي لحساب البنك والنقد. يُضاف هذا المبلغ إلى رصيدك الإجمالي ولا يظهر كمعاملة.',
+  'settings.opening.bank': 'الرصيد الافتتاحي لحساب البنك',
+  'settings.opening.cash': 'الرصيد الافتتاحي للنقد',
+  'settings.opening.save': 'حفظ الرصيد الافتتاحي',
+  'settings.opening.saved': 'تم الحفظ',
 
-  'undo.firstRunSeed': 'إعداد أولي',
+  'undo.setOpening': 'الرصيد الافتتاحي',
   'undo.addRecurring': 'إضافة معاملة متكررة',
   'undo.editRecurring': 'تعديل معاملة متكررة',
   'undo.deleteRecurring': 'إيقاف معاملة متكررة',
@@ -462,11 +466,15 @@ const de: Record<keyof typeof ar, string> = {
   'firstRun.help.balances': 'Auf 0 belassen, wenn Sie keinen Anfangsbestand erfassen möchten.',
   'firstRun.cta': 'Loslegen',
 
-  'category.openingBalance': 'Anfangsbestand',
-  'tx.openingBalance.bank': 'Anfangsbestand Bankkonto',
-  'tx.openingBalance.cash': 'Anfangsbestand Bargeld',
+  'settings.section.opening': 'Anfangsbestand',
+  'settings.opening.help':
+    'Legen Sie Ihren anfänglichen Bankkonto- und Bargeldbestand fest. Dieser Betrag wird zu Ihrem Gesamtsaldo addiert und nicht als Buchung angezeigt.',
+  'settings.opening.bank': 'Anfangs-Bankkontostand',
+  'settings.opening.cash': 'Anfangs-Bargeldbestand',
+  'settings.opening.save': 'Anfangsbestand speichern',
+  'settings.opening.saved': 'Gespeichert',
 
-  'undo.firstRunSeed': 'Erste Einrichtung',
+  'undo.setOpening': 'Anfangsbestand',
   'undo.addRecurring': 'Wiederkehrende Buchung hinzugefügt',
   'undo.editRecurring': 'Wiederkehrende Buchung bearbeitet',
   'undo.deleteRecurring': 'Wiederkehrende Buchung gestoppt',
@@ -699,11 +707,15 @@ const en: Record<keyof typeof ar, string> = {
   'firstRun.help.balances': "Leave at 0 if you don't want a starting balance.",
   'firstRun.cta': 'Get started',
 
-  'category.openingBalance': 'Opening balance',
-  'tx.openingBalance.bank': 'Initial bank account balance',
-  'tx.openingBalance.cash': 'Initial cash balance',
+  'settings.section.opening': 'Opening balance',
+  'settings.opening.help':
+    'Set your starting bank and cash balances. This amount is added to your total and is not shown as a transaction.',
+  'settings.opening.bank': 'Opening bank balance',
+  'settings.opening.cash': 'Opening cash balance',
+  'settings.opening.save': 'Save opening balance',
+  'settings.opening.saved': 'Saved',
 
-  'undo.firstRunSeed': 'Initial setup',
+  'undo.setOpening': 'Opening balance',
   'undo.addRecurring': 'Add recurring entry',
   'undo.editRecurring': 'Edit recurring entry',
   'undo.deleteRecurring': 'Stop recurring entry',

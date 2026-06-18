@@ -58,6 +58,7 @@ export type Store = {
     bankOpening: number;
     cashOpening: number;
   }) => void;
+  setOpeningBalances: (bank: number, cash: number) => void;
 
   addTx: (tx: Omit<Transaction, 'id'>) => void;
   editTx: (id: string, tx: Omit<Transaction, 'id'>) => void;
@@ -192,22 +193,12 @@ export function useStore(): Store {
     }) => {
       setCurrencyState(chosen);
       setIsFirstRun(false);
-      const bank = Number.isFinite(bankOpening) && bankOpening > 0 ? bankOpening : 0;
-      const cash = Number.isFinite(cashOpening) && cashOpening > 0 ? cashOpening : 0;
+      const bank = Number.isFinite(bankOpening) ? bankOpening : 0;
+      const cash = Number.isFinite(cashOpening) ? cashOpening : 0;
       if (bank === 0 && cash === 0) return;
       setHistory((h) => {
         const data = currentData(h);
-        const action: Action = {
-          kind: 'seedOpeningBalances',
-          bank,
-          cash,
-          bankTxId: newId(),
-          cashTxId: newId(),
-          dateIso: todayIso(),
-          categoryName: tRef.current('category.openingBalance'),
-          bankDescription: tRef.current('tx.openingBalance.bank'),
-          cashDescription: tRef.current('tx.openingBalance.cash'),
-        };
+        const action: Action = { kind: 'setOpeningBalances', bank, cash };
         const next = reduce(data, action);
         if (next === data) return h;
         const descriptor = actionToDescriptor(data, action);
@@ -265,6 +256,7 @@ export function useStore(): Store {
     isFirstRun,
     setCurrency,
     completeFirstRun,
+    setOpeningBalances: (bank, cash) => apply({ kind: 'setOpeningBalances', bank, cash }),
     addTx: (tx) => apply({ kind: 'addTx', tx, id: newId() }),
     editTx: (id, tx) => apply({ kind: 'updateTx', id, tx }),
     deleteTx: (id) => apply({ kind: 'deleteTx', id }),

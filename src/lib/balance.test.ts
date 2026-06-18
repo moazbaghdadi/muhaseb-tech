@@ -80,6 +80,30 @@ describe('totalBalance', () => {
   });
 });
 
+describe('opening balances', () => {
+  it('adds the bucket opening balance to its transaction-derived balance', () => {
+    const list = [tx('income', 100, 'bank'), tx('expense', 30, 'cash')];
+    const opening = { bank: 500, cash: 200 };
+    expect(bucketBalance(list, 'bank', opening)).toBe(600);
+    expect(bucketBalance(list, 'cash', opening)).toBe(170);
+  });
+
+  it('folds both openings into the total', () => {
+    const list = [tx('income', 100, 'bank')];
+    expect(totalBalance(list, { bank: 500, cash: 200 })).toBe(800);
+  });
+
+  it('supports a negative opening balance', () => {
+    expect(bucketBalance([], 'bank', { bank: -300, cash: 0 })).toBe(-300);
+  });
+
+  it('treats an omitted opening as zero', () => {
+    const list = [tx('income', 100, 'bank')];
+    expect(bucketBalance(list, 'bank')).toBe(100);
+    expect(totalBalance(list)).toBe(100);
+  });
+});
+
 describe('sumByType', () => {
   it('sums income and expense across both buckets, ignoring transfers', () => {
     const list = [
