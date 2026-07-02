@@ -48,6 +48,7 @@ export function TxRow({ t, onDelete, onEdit, onOpenAttachments, tableMode }: Pro
       <IRepeat s={14} />
     </span>
   ) : null;
+  const invoiceLabel = t.invoiceNumber ? `${tr('tx.invoicePrefix')} ${t.invoiceNumber}` : null;
   const deleteAria = tr('tx.deleteAria');
   const editAria = tr('tx.editAria');
   const attCount = t.attachments.length;
@@ -127,7 +128,15 @@ export function TxRow({ t, onDelete, onEdit, onOpenAttachments, tableMode }: Pro
         </td>
         <td style={{ ...tdS, direction: 'ltr', textAlign: 'start' }}>{bucketCellText}</td>
         <td style={tdS}>{isTransfer ? '—' : t.category}</td>
-        <td style={tdS}>{t.description || '—'}</td>
+        <td style={tdS}>
+          {t.description || '—'}
+          {invoiceLabel && (
+            <>
+              <br />
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{invoiceLabel}</span>
+            </>
+          )}
+        </td>
         <td
           style={{
             ...tdS,
@@ -219,6 +228,7 @@ export function TxRow({ t, onDelete, onEdit, onOpenAttachments, tableMode }: Pro
         </p>
         <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
           {bucketCellText} · {isTransfer ? typeLabel : t.category} · {dayStr}
+          {invoiceLabel && ` · ${invoiceLabel}`}
         </p>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

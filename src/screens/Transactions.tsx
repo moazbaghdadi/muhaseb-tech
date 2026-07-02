@@ -66,7 +66,8 @@ export function Transactions({
       const q = search.toLowerCase();
       return (
         !!t.description?.toLowerCase().includes(q) ||
-        t.category.toLowerCase().includes(q)
+        t.category.toLowerCase().includes(q) ||
+        !!t.invoiceNumber?.toLowerCase().includes(q)
       );
     })
     .sort((a, b) => b.date.localeCompare(a.date));

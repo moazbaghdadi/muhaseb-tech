@@ -20,6 +20,7 @@ const TX_HEADERS = [
   'toBucket',
   'category',
   'description',
+  'invoiceNumber',
   'amount',
 ] as const;
 const CAT_HEADERS = ['type', 'name'] as const;
@@ -49,6 +50,7 @@ export function buildWorkbook(data: AppData): Uint8Array {
     toBucket: t.toBucket ?? '',
     category: t.category,
     description: t.description,
+    invoiceNumber: t.invoiceNumber ?? '',
     amount: t.amount,
   }));
   const txSheet = XLSX.utils.json_to_sheet(txRows, { header: [...TX_HEADERS] });
@@ -172,6 +174,7 @@ function parseTxRow(row: Record<string, unknown>): TxRowResult {
 
   const category = coerceString(row.category);
   const description = coerceString(row.description);
+  const invoiceNumber = coerceString(row.invoiceNumber).trim();
 
   const tx: Transaction = {
     id: crypto.randomUUID(),
@@ -183,6 +186,7 @@ function parseTxRow(row: Record<string, unknown>): TxRowResult {
     attachments: [],
     bucket: fromBucket,
     ...(toBucket ? { toBucket } : {}),
+    ...(invoiceNumber ? { invoiceNumber } : {}),
   };
   return { tx };
 }

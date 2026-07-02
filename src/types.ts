@@ -21,6 +21,7 @@ export type Transaction = {
   // Set on transactions generated from a recurring rule. Informational only
   // (drives the 🔁 badge); a generated transaction is otherwise an ordinary tx.
   recurringId?: string;
+  invoiceNumber?: string;
 };
 
 export type Categories = {

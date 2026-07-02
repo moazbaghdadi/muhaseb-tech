@@ -27,6 +27,7 @@ export type NewTx = {
   type: TxType;
   category: string;
   description: string;
+  invoiceNumber?: string;
   amount: number;
   date: string;
   attachments: Attachment[];
@@ -73,6 +74,7 @@ export function AddTxModal({
   const [toBucket, setToBucket] = useState<Bucket>(initialTx?.toBucket ?? 'cash');
   const [cat, setCat] = useState(initialTx?.category ?? '');
   const [desc, setDesc] = useState(initialTx?.description ?? '');
+  const [invoiceNumber, setInvoiceNumber] = useState(initialTx?.invoiceNumber ?? '');
   const [amount, setAmount] = useState(initialTx ? String(initialTx.amount) : '');
   const [date, setDate] = useState(initialTx?.date ?? todayIso());
   const [attachments, setAttachments] = useState<Attachment[]>(initialTx?.attachments ?? []);
@@ -144,6 +146,7 @@ export function AddTxModal({
       attachments,
       bucket,
       ...(isTransfer ? { toBucket } : {}),
+      ...(invoiceNumber.trim() ? { invoiceNumber: invoiceNumber.trim() } : {}),
     };
     onSubmit(tx);
     onClose();
@@ -396,6 +399,19 @@ export function AddTxModal({
             </ul>
           )}
         </div>
+
+        {!recurring && (
+          <>
+            <FLabel>{t('modal.field.invoiceNumber')}</FLabel>
+            <input
+              aria-label={t('modal.field.invoiceNumber')}
+              value={invoiceNumber}
+              onChange={(e) => setInvoiceNumber(e.target.value)}
+              placeholder={t('modal.field.invoiceNumberPlaceholder')}
+              style={{ ...inputSt, direction: 'ltr', textAlign: 'start' }}
+            />
+          </>
+        )}
 
         <FLabel>{t('modal.field.amount')}</FLabel>
         <input

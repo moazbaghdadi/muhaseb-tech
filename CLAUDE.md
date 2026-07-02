@@ -119,7 +119,7 @@
 
 ## Import/Export
 - Tauri-only feature (browser shows a disabled hint). Lives in `src/screens/ImportExport.tsx`; serialization in `src/lib/excel.ts` (uses the `xlsx` SheetJS library).
-- Format: `.xlsx` workbook with two sheets — `Transactions` (columns: `date`, `type`, `bucket`, `toBucket`, `category`, `description`, `amount`) and `Categories` (columns: `type`, `name`). Headers are stable English identifiers — do not localize them.
+- Format: `.xlsx` workbook with two sheets — `Transactions` (columns: `date`, `type`, `bucket`, `toBucket`, `category`, `description`, `invoiceNumber`, `amount`) and `Categories` (columns: `type`, `name`). Headers are stable English identifiers — do not localize them.
 - `id` and `attachments` are intentionally **not** round-tripped. Imported transactions get a fresh `crypto.randomUUID()` and `attachments: []`. Attachment binaries are not bundled into the Excel.
 - Import validation rejects bad rows (invalid date/type/bucket, non-positive amount, transfer with same bucket on both sides) and surfaces them as a skipped-rows panel — valid rows still go through.
 - Importer auto-backfills `cats` from any transaction category that wasn't listed in the Categories sheet, so a transactions-only Excel still produces a consistent view.
